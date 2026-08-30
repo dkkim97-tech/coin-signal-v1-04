@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>마이웨이 75 · 코인 시그널 앱 V1.04</title>
+  <title>마이웨이 75 · 코인 시그널 앱 V1.05</title>
   <style>:root { color-scheme: dark; --bg:#090c0c; --panel:#111716; --line:#26302e; --text:#eff7f4; --muted:#91a19d; --mint:#72f2bd; --amber:#f2c572; --danger:#ff776f; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,"Pretendard","Noto Sans KR",system-ui,sans-serif; background:radial-gradient(circle at 75% 0,#143126 0,transparent 33%),var(--bg); color:var(--text); }
@@ -37,8 +37,8 @@ button:disabled { opacity:.5; cursor:wait; }
 .comparison-chart { width:100%; height:auto; background:#0c1110; border-radius:10px; }
 .chart-grid { stroke:#26302e; stroke-width:1; vector-effect:non-scaling-stroke; }.chart-zero { stroke:#91a19d; stroke-width:1.5; vector-effect:non-scaling-stroke; }
 .chart-label { fill:#eff7f4; font-size:14px; font-weight:650; }.chart-label .coin-id { fill:#72f2bd; font-weight:850; }.chart-label .strategy-id { fill:#eff7f4; }.chart-value { fill:#eff7f4; font-size:13px; font-weight:700; }.chart-tick { fill:#91a19d; font-size:12px; }
-.bar-positive { fill:#72f2bd; }.bar-negative { fill:#ff776f; }.bar-macd1 { fill:#72f2bd; }.bar-macd2 { fill:#c891ff; }.bar-mdd { fill:#f2c572; }
-.macd-return-legend { display:flex; flex-wrap:wrap; gap:14px; margin:8px 0 10px; color:var(--muted); font-size:12px; }.macd-return-legend span { display:inline-flex; align-items:center; gap:6px; }.macd-return-legend i { width:12px; height:12px; border-radius:3px; }.macd-return-legend .macd1-color { background:#72f2bd; }.macd-return-legend .macd2-color { background:#c891ff; }
+.bar-positive { fill:#72f2bd; }.bar-negative { fill:#ff776f; }.bar-macd1 { fill:#72f2bd; }.bar-macd2 { fill:#c891ff; }.bar-macd3 { fill:#ff9d5c; }.bar-mdd { fill:#f2c572; }
+.macd-return-legend { display:flex; flex-wrap:wrap; gap:14px; margin:8px 0 10px; color:var(--muted); font-size:12px; }.macd-return-legend span { display:inline-flex; align-items:center; gap:6px; }.macd-return-legend i { width:12px; height:12px; border-radius:3px; }.macd-return-legend .macd1-color { background:#72f2bd; }.macd-return-legend .macd2-color { background:#c891ff; }.macd-return-legend .macd3-color { background:#ff9d5c; }
 .detail-heading { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-top:8px; }
 .detail-controls { display:flex; gap:10px; }.detail-controls label { min-width:130px; }.detail-controls select { padding:9px 32px 9px 10px; }
 .chart-legend { display:flex; flex-wrap:wrap; gap:16px; color:var(--muted); font-size:12px; margin:16px 0 8px; }.chart-legend span { display:flex; align-items:center; gap:6px; }.chart-legend i { display:inline-block; width:16px; height:3px; }.legend-line { background:var(--mint); }.legend-drawdown { background:var(--amber); }.legend-win { background:#20d9ff; width:10px!important; height:10px!important; clip-path:polygon(50% 0,100% 100%,0 100%); }.legend-loss { background:#ff4d9d; width:10px!important; height:10px!important; clip-path:polygon(0 0,100% 0,50% 100%); }
@@ -64,9 +64,9 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
 <body>
   <header>
     <div>
-      <p class="eyebrow">LOCAL STRATEGY LAB · APP V1.04</p>
-      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V1.04</span></h1>
-      <p class="subtitle">MACD 1: RSI&gt;30·0선 돌파 전략 · MACD 2: 0선 위/아래 × 골든/데드 상태별 100%·50%·50%·0% 보유</p>
+      <p class="eyebrow">LOCAL STRATEGY LAB · APP V1.05</p>
+      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V1.05</span></h1>
+      <p class="subtitle">MACD 1: RSI&gt;30·0선 돌파 · MACD 2: MACD(12,26,9) · MACD 3: MACD(18,39,9) 상태별 100%·50%·50%·0% 보유</p>
     </div>
     <div class="header-actions">
       <button id="refresh-all-data" class="update-button" data-refresh-all type="button">↻ 업데이트</button>
@@ -97,7 +97,7 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
 
     <section class="table-card live-results">
       <div class="chart-heading">
-        <div><p class="eyebrow">UPBIT KRW HISTORICAL DATA</p><h2>MACD 1·MACD 2 — 12종목 전략 자산 비교 결과</h2></div>
+        <div><p class="eyebrow">UPBIT KRW HISTORICAL DATA</p><h2>MACD 1·MACD 2·MACD 3 — 12종목 전략 자산 비교 결과</h2></div>
         <span>종목별 독립계좌 비교</span>
       </div>
       <p class="notice">일봉 종가 신호 다음 일봉 시가 체결, 수수료·슬리피지 포함 결과입니다. 과거 호가창 자료는 없어 최근 30일 거래대금으로 유동성을 대체했으며, 수익률은 미래 성과를 의미하지 않습니다.</p>
@@ -116,7 +116,7 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
         <a href="ONDO-MACD-RSI-V2.3-ALL.html">ONDO 상세 보기 →</a></div>
       <div class="comparison-grid">
         <div class="plot-block">
-          <div class="plot-title-row"><div><h3>수익률 비교</h3><p>전체 기간 또는 선택 연도의 종목별 수익률입니다.</p><div class="macd-return-legend" aria-label="전략 색상 범례"><span><i class="macd1-color"></i>MACD 1 · 0선 돌파</span><span><i class="macd2-color"></i>MACD 2 · 상태별 보유 비중</span></div></div><label>표시 연도<select id="return-comparison-year"></select></label></div>
+          <div class="plot-title-row"><div><h3>수익률 비교</h3><p>전체 기간 또는 선택 연도의 종목별 수익률입니다.</p><div class="macd-return-legend" aria-label="전략 색상 범례"><span><i class="macd1-color"></i>MACD 1 · 0선 돌파</span><span><i class="macd2-color"></i>MACD 2 · MACD(12,26,9)</span><span><i class="macd3-color"></i>MACD 3 · MACD(18,39,9)</span></div></div><label>표시 연도<select id="return-comparison-year"></select></label></div>
           <svg id="return-comparison" class="comparison-chart" viewBox="0 0 760 430" role="img" aria-label="종목과 전략별 총수익률 비교"></svg>
         </div>
         <div class="plot-block">
@@ -75323,7 +75323,7 @@ function comparisonRowsForYear(result, selectedYear, metric) {
   const year = Number(selectedYear), start = Date.UTC(year, 0, 1), end = Date.UTC(year + 1, 0, 1) - 1, seriesByKey = new Map((result.series || []).map((item) => [`${item.market}|${item.strategy}`, item]));
   return result.summaries.map((row) => { const series = seriesByKey.get(`${row.market}|${row.strategy}`), points = (series?.equityCurve || []).map((point) => ({ timestamp: point.timestamp, equity: Number.isFinite(point.equity) ? point.equity : Number.isFinite(point.return) ? (series.initialEquity || 1) * (1 + point.return) : null })).filter((point) => Number.isFinite(point.timestamp) && Number.isFinite(point.equity)).sort((a, b) => a.timestamp - b.timestamp), inPeriod = points.filter((point) => point.timestamp >= start && point.timestamp <= end), prior = points.filter((point) => point.timestamp < start).at(-1), first = prior || inPeriod[0], last = inPeriod.at(-1); if (!first || !last || !(first.equity > 0)) return null; const periodReturn = last.equity / first.equity - 1, elapsedStart = Math.max(start, first.timestamp), years = Math.max(1 / 365.2425, (last.timestamp - elapsedStart) / (365.2425 * 86_400_000)), annualReturn = periodReturn <= -1 ? -1 : (1 + periodReturn) ** (1 / years) - 1; return { ...row, totalReturn: periodReturn, annualReturn }; }).filter((row) => row && Number.isFinite(row[metric]));
 }
-function annualRowsForMarket(result, market, years) { const base = result.summaries.find((row) => row.market === market); if (!base) return []; const rows = [{ ...base, market: "전체 기간", annualReturn: annualizedReturn(base) }]; for (const year of [...years].sort((a, b) => a - b)) { const row = comparisonRowsForYear(result, String(year), "annualReturn").find((item) => item.market === market && item.strategy === base.strategy); if (row) rows.push({ ...row, market: `${year}년` }); } return rows; }
+function annualRowsForMarket(result, market, years) { const bases = result.summaries.filter((row) => row.market === market); if (!bases.length) return []; const rows = bases.map((base) => ({ ...base, market: "전체 기간", annualReturn: annualizedReturn(base) })); for (const year of [...years].sort((a, b) => a - b)) { const periodRows = comparisonRowsForYear(result, String(year), "annualReturn").filter((item) => item.market === market); rows.push(...periodRows.map((row) => ({ ...row, market: `${year}년` }))); } return rows; }
 
 async function loadUpbitSummary() {
   const body = document.querySelector("#upbit-summary");
@@ -75583,16 +75583,16 @@ function drawComparisonChart(svg, rows, metric) {
     const barX = isReturn ? Math.min(zero, valueX) : left;
     const width = Math.max(2, isReturn ? Math.abs(valueX - zero) : valueX - left);
     const y = top + index * rowGap;
-    const strategyCss = row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
-    const css = isReturn ? `${value >= 0 ? "bar-positive" : "bar-negative"} ${strategyCss}` : "bar-mdd";
+    const strategyCss = row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
+    const css = isReturn ? `${value >= 0 ? "bar-positive" : "bar-negative"} ${strategyCss}` : strategyCss;
     const textX = isReturn ? 748 : valueX + 7;
     const anchor = isReturn ? "end" : "start";
     const marketLabel = row.market.replace("KRW-", "");
-    const strategyLabel = row.strategy?.startsWith("MACD 1") ? "MACD 1" : row.strategy?.startsWith("MACD 2") ? "MACD 2" : row.strategy || "";
+    const strategyLabel = row.strategy?.startsWith("MACD 1") ? "MACD 1" : row.strategy?.startsWith("MACD 2") ? "MACD 2" : row.strategy?.startsWith("MACD 3") ? "MACD 3" : row.strategy || "";
     const rowLabel = useMarketOnlyLabel
       ? `<tspan class="coin-id">${marketLabel}</tspan>`
       : `<tspan class="coin-id">${marketLabel}</tspan><tspan class="strategy-id">｜${strategyLabel}</tspan>`;
-    const fullDescription = strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · 골든/데드 상태별 보유 비중" : row.strategy;
+    const fullDescription = strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : row.strategy;
     return `<text class="chart-label" x="178" y="${y + 15}" text-anchor="end" aria-label="${marketLabel} · ${fullDescription}">${rowLabel}</text><rect class="${css}" x="${barX}" y="${y}" width="${width}" height="20" rx="3"><title>${marketLabel} · ${fullDescription}: ${percent(isReturn ? value : -value)}</title></rect><text class="chart-value" x="${textX}" y="${y + 15}" text-anchor="${anchor}">${percent(isReturn ? value : -value)}</text>`;
   }).join("");
   const chartTitle = metric === "annualReturn" ? "종목별 연평균 복리수익률" : isReturn ? "종목별 총수익률" : "종목별 최대낙폭";
@@ -75652,9 +75652,11 @@ function nearestPoint(points, timestamp) {
   return points[low];
 }
 </script>
-  <script src="macd2-result.js?v=1.2"></script>
-  <script src="macd2-latest-extension.js?v=1.2"></script>
-  <script src="macd2-chart-overlay.js?v=1.2"></script>
+  <script src="macd2-result.js?v=1.3"></script>
+  <script src="macd3-result.js?v=1.0"></script>
+  <script src="macd2-latest-extension.js?v=1.3"></script>
+  <script src="macd3-latest-extension.js?v=1.0"></script>
+  <script src="macd2-chart-overlay.js?v=1.3"></script>
   <script src="strategy-period-lab.js"></script>
 </body>
 </html>
