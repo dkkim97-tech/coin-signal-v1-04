@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>미국 금리·시장 상관관계 | 마이웨이 75</title>
+  <link rel="stylesheet" href="public/rate-dashboard.css">
+</head>
+<body>
+  <header>
+    <div><p class="eyebrow">MACRO CORRELATION LAB</p><h1>미국 금리·시장 상관관계</h1><p class="subtitle">2017년 이후 금리 국면과 주요 자산의 방향을 같은 시간축에서 비교합니다.</p></div>
+    <div class="header-actions"><div class="capture-actions"><button class="action copy-button" data-screen-copy type="button">화면 캡처 복사</button><button id="download-pdf" class="action" data-pdf-export type="button">화면 캡처 PDF 저장</button></div><a class="back-link" href="MACD-RSI-V2.3-전체코인-백테스트.html">← 코인 시그널 1.0으로 돌아가기</a></div>
+  </header>
+  <main>
+    <section class="summary-grid" aria-label="현재 금리 요약">
+      <div class="stat"><span>미국 목표금리 상단</span><strong>3.75%</strong><small>2026-07-29 FOMC 기준</small></div>
+      <div class="stat"><span>미국 목표금리 중간값</span><strong>3.625%</strong><small>3.50~3.75%</small></div>
+      <div class="stat"><span>한국 기준금리</span><strong>2.75%</strong><small>2026-07-16 기준</small></div>
+      <div class="stat"><span>미국 상단 − 한국</span><strong>+1.00%p</strong><small>명목 정책금리 차이</small></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">POLICY RATE HISTORY</p><h2>미국·한국 정책금리 추이</h2></div><p>세로축은 정책금리(%)입니다. 미국은 목표범위 상단, 한국은 기준금리를 사용했습니다.</p></div>
+      <div class="legend"><span><i style="background:var(--amber)"></i>미국 목표금리 상단</span><span><i style="background:var(--blue)"></i>한국 기준금리</span></div>
+      <svg id="rate-history" class="chart" viewBox="0 0 1160 430" role="img" aria-label="2017년부터 2026년까지 미국과 한국 정책금리 추이"></svg>
+      <div id="rate-cursor-readout" class="cursor-readout" aria-live="polite">차트 위에서 커서를 움직이면 날짜·미국 금리·한국 금리·금리 차이가 함께 표시됩니다.</div>
+      <h3 class="subchart-title">미국−한국 정책금리 차이</h3>
+      <svg id="rate-spread" class="chart spread-chart" viewBox="0 0 1160 250" role="img" aria-label="미국 목표금리 상단과 한국 기준금리 차이"></svg>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">12-MONTH SCENARIO</p><h2>향후 1년 금리 시뮬레이션</h2></div><p>세로축은 미국 정책금리(%)입니다. 2026년 6월 FOMC 점도표와 조건부 경로를 함께 표시합니다.</p></div>
+      <div class="legend"><span><i style="background:var(--amber)"></i>기준: 3.75% 유지</span><span><i style="background:var(--mint)"></i>물가 둔화: 3.25%</span><span><i style="background:var(--red)"></i>물가 재상승: 4.25%</span></div>
+      <svg id="forecast-chart" class="chart" viewBox="0 0 1160 360" role="img" aria-label="2026년 8월부터 2027년 8월까지 미국 금리 세 가지 시나리오"></svg>
+      <h3 class="subchart-title">FOMC 점도표 — 위원별 적정금리 중간값</h3>
+      <p class="muted dot-note">2026년 6월 SEP 실제 분포입니다. 점 하나가 참가자 한 명을 뜻합니다.</p>
+      <svg id="dotplot-chart" class="chart dotplot-chart" viewBox="0 0 1160 390" role="img" aria-label="2026년과 2027년 FOMC 참가자별 연방기금금리 점도표"></svg>
+      <div class="forecast-notes"><div class="note"><strong>기준 시나리오</strong><p>현재 상단 3.75%가 1년간 유지되는 경로입니다. 2026년 6월 SEP의 연말 중앙값 3.8%, 2027년 중앙값 3.6%가 현재 목표범위 중간값 3.625%와 가깝다는 점을 반영했습니다.</p></div><div class="note"><strong>변경 조건</strong><p>근원 PCE가 예상보다 빠르게 둔화하고 고용이 약해지면 두 차례 인하, 반대로 에너지·서비스 물가가 재상승하면 두 차례 인상 경로를 적용했습니다.</p></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">QUARTERLY MARKET COMPARISON</p><h2>금리와 주요 시장 비교</h2></div><p>각 차트는 한 줄 전체 폭을 사용합니다. 자산은 왼쪽 단위축, 미국 정책금리는 오른쪽 %축이며 도트는 분기 말 값입니다.</p></div>
+      <div class="comparison-grid">
+        <div class="comparison-card"><h3>미국 금리와 비트코인</h3><p>왼쪽 축: 비트코인 가격(백만원·KRW) · 최근값 2026-07-31</p><svg id="cmp-btc" class="chart quarterly-chart" viewBox="0 0 1160 460" role="img" aria-label="미국 금리와 비트코인 분기별 가격 비교"></svg><div id="cmp-btc-readout" class="comparison-readout">커서를 이동하면 해당 분기의 금리와 비트코인 가격이 표시됩니다.</div></div>
+        <div class="comparison-card"><h3>미국 금리와 다우·나스닥</h3><p>왼쪽 축: 주가지수(pt) · 분기 말 종가</p><svg id="cmp-us-stocks" class="chart quarterly-chart" viewBox="0 0 1160 460" role="img" aria-label="미국 금리와 다우 및 나스닥 분기별 비교"></svg><div id="cmp-us-stocks-readout" class="comparison-readout">커서를 이동하면 해당 분기의 금리와 두 지수가 표시됩니다.</div></div>
+        <div class="comparison-card"><h3>미국 금리와 금</h3><p>왼쪽 축: 금 선물 가격(USD/oz) · 분기 말 종가</p><svg id="cmp-metals" class="chart quarterly-chart" viewBox="0 0 1160 460" role="img" aria-label="미국 금리와 금 분기별 가격 비교"></svg><div id="cmp-metals-readout" class="comparison-readout">커서를 이동하면 해당 분기의 금리와 금 가격이 표시됩니다.</div></div>
+        <div class="comparison-card"><h3>미국 금리와 코스피·코스닥</h3><p>왼쪽 축: 한국 주가지수(pt) · 분기 말 종가</p><svg id="cmp-korea-stocks" class="chart quarterly-chart" viewBox="0 0 1160 460" role="img" aria-label="미국 금리와 코스피 및 코스닥 분기별 비교"></svg><div id="cmp-korea-stocks-readout" class="comparison-readout">커서를 이동하면 해당 분기의 금리와 두 지수가 표시됩니다.</div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div><p class="eyebrow">FOMC TIMELINE</p><h2>미국 금리 결정 시점과 주요 이슈</h2></div><p>금리 변화와 함께 해석할 핵심 국면을 압축했습니다.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>날짜</th><th>상단 금리</th><th>변화</th><th>주요 이슈·해석</th></tr></thead><tbody id="event-table"></tbody></table></div>
+    </section>
+
+    <section class="panel">
+      <p class="notice">상관관계는 인과관계를 뜻하지 않습니다. 비교 차트의 시장 가격은 일별 백테스트용 정밀 시계열이 아니라 연말 및 최근 대표값이며, 투자 판단 전 원자료의 최신 수치를 다시 확인해야 합니다.</p>
+      <h2>데이터와 전망 근거</h2>
+      <div class="source-list">
+        <a href="https://fred.stlouisfed.org/series/DFEDTARU">미 연준 목표금리 상단(FRED)</a> · <a href="https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260617.htm">2026년 6월 FOMC 경제전망·점도표</a> · <a href="https://www.bok.or.kr/portal/singl/baseRate/list.do?menuNo=200656">한국은행 기준금리 변동추이</a> · <a href="https://fred.stlouisfed.org/series/DJIA">다우지수(FRED)</a> · <a href="https://fred.stlouisfed.org/series/NASDAQCOM">나스닥 종합지수(FRED)</a> · <a href="https://www.gold.org/goldhub/research">금·은 검증값(World Gold Council)</a> · 업데이트 버튼의 현재 시장값은 Upbit와 Yahoo Finance 공개 시세를 사용합니다.
+      </div>
+    </section>
+  </main>
+  <footer>마이웨이 75 _ 코인 시그널 1.0 · 연구·백테스트용 거시경제 대시보드</footer>
+  <script src="public/pdf-export.js"></script>
+  <script src="public/update-all.js"></script>
+  <script src="public/rate-quarterly-data.js"></script>
+  <script src="public/rate-dashboard.js"></script>
+</body>
+</html>
