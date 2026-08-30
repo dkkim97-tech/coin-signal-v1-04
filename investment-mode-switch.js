@@ -51,7 +51,7 @@
     if (title) title.insertAdjacentHTML("beforeend", '<span class="futures-title-tag">선물</span>');
     const notice = document.createElement("div");
     notice.className = "futures-mode-notice";
-    notice.innerHTML = "<strong>선물 투자 앱 독립 개발 영역</strong> · 현재 매수·매도 시그널과 백테스트 기준은 현물 앱과 동일합니다. 향후 레버리지, 롱·숏, 펀딩비, 증거금과 청산 규칙은 이 선물 앱에만 별도로 검증·적용됩니다.";
+    notice.innerHTML = "<strong>선물 투자 앱 독립 개발 영역</strong> · MACD 4는 MACD(18,39,9) 기준으로 0선 아래·데드크로스에서 1배 숏 100%를 적용하고, 나머지 상태에서는 롱 100%·50%를 적용합니다. 펀딩비·증거금·강제청산 가격은 아직 반영하지 않은 백테스트입니다.";
     header.insertAdjacentElement("afterend", notice);
   }
 })();
