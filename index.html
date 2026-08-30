@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>마이웨이 75 · 코인 시그널 앱 V1.06</title>
+  <title>마이웨이 75 · 코인 시그널 앱 V1.07</title>
   <style>:root { color-scheme: dark; --bg:#090c0c; --panel:#111716; --line:#26302e; --text:#eff7f4; --muted:#91a19d; --mint:#72f2bd; --amber:#f2c572; --danger:#ff776f; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,"Pretendard","Noto Sans KR",system-ui,sans-serif; background:radial-gradient(circle at 75% 0,#143126 0,transparent 33%),var(--bg); color:var(--text); }
@@ -35,6 +35,8 @@ button:disabled { opacity:.5; cursor:wait; }
 .plot-title-row{display:flex;justify-content:space-between;align-items:end;gap:12px}.plot-title-row>div{min-width:0}.plot-title-row label{display:grid;gap:4px;color:var(--muted);font-size:11px}.plot-title-row select{min-width:112px;background:#090d0c;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px}
 @media(max-width:520px){.plot-title-row{align-items:stretch;flex-direction:column}.plot-title-row select{width:100%}}
 .comparison-chart { width:100%; height:auto; background:#0c1110; border-radius:10px; }
+.coin-group-band { fill:rgba(114,242,189,.035); stroke:rgba(114,242,189,.16); stroke-width:1; }
+.coin-group-band.is-alt { fill:rgba(200,145,255,.035); stroke:rgba(200,145,255,.15); }
 .chart-grid { stroke:#26302e; stroke-width:1; vector-effect:non-scaling-stroke; }.chart-zero { stroke:#91a19d; stroke-width:1.5; vector-effect:non-scaling-stroke; }
 .chart-label { fill:#eff7f4; font-size:14px; font-weight:650; }.chart-label .coin-id { fill:#72f2bd; font-weight:850; }.chart-label .strategy-id { fill:#eff7f4; }.chart-value { fill:#eff7f4; font-size:13px; font-weight:700; }.chart-tick { fill:#91a19d; font-size:12px; }
 .bar-positive { fill:#72f2bd; }.bar-negative { fill:#ff776f; }.bar-macd1 { fill:#72f2bd; }.bar-macd2 { fill:#c891ff; }.bar-macd3 { fill:#ff9d5c; }.bar-mdd { fill:#f2c572; }
@@ -64,8 +66,8 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
 <body>
   <header>
     <div>
-      <p class="eyebrow">LOCAL STRATEGY LAB · APP V1.06</p>
-      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V1.06</span></h1>
+      <p class="eyebrow">LOCAL STRATEGY LAB · APP V1.07</p>
+      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V1.07</span></h1>
       <p class="subtitle">MACD 1: RSI&gt;30·0선 돌파 · MACD 2: MACD(12,26,9) · MACD 3: MACD(18,39,9) 상태별 100%·50%·50%·0% 보유</p>
     </div>
     <div class="header-actions">
@@ -75323,6 +75325,11 @@ function comparisonRowsForYear(result, selectedYear, metric) {
   const year = Number(selectedYear), start = Date.UTC(year, 0, 1), end = Date.UTC(year + 1, 0, 1) - 1, seriesByKey = new Map((result.series || []).map((item) => [`${item.market}|${item.strategy}`, item]));
   return result.summaries.map((row) => { const series = seriesByKey.get(`${row.market}|${row.strategy}`), points = (series?.equityCurve || []).map((point) => ({ timestamp: point.timestamp, equity: Number.isFinite(point.equity) ? point.equity : Number.isFinite(point.return) ? (series.initialEquity || 1) * (1 + point.return) : null })).filter((point) => Number.isFinite(point.timestamp) && Number.isFinite(point.equity)).sort((a, b) => a.timestamp - b.timestamp), inPeriod = points.filter((point) => point.timestamp >= start && point.timestamp <= end), prior = points.filter((point) => point.timestamp < start).at(-1), first = prior || inPeriod[0], last = inPeriod.at(-1); if (!first || !last || !(first.equity > 0)) return null; const periodReturn = last.equity / first.equity - 1, elapsedStart = Math.max(start, first.timestamp), years = Math.max(1 / 365.2425, (last.timestamp - elapsedStart) / (365.2425 * 86_400_000)), annualReturn = periodReturn <= -1 ? -1 : (1 + periodReturn) ** (1 / years) - 1; return { ...row, totalReturn: periodReturn, annualReturn }; }).filter((row) => row && Number.isFinite(row[metric]));
 }
+function groupComparisonRowsByCoin(rows) {
+  const marketOrder = new Map([...new Set(rows.map((row) => row.market))].map((market, index) => [market, index]));
+  const strategyOrder = (strategy = "") => strategy.startsWith("MACD 1") ? 1 : strategy.startsWith("MACD 2") ? 2 : strategy.startsWith("MACD 3") ? 3 : 99;
+  return [...rows].sort((left, right) => (marketOrder.get(left.market) - marketOrder.get(right.market)) || (strategyOrder(left.strategy) - strategyOrder(right.strategy)) || String(left.strategy).localeCompare(String(right.strategy), "ko"));
+}
 function annualRowsForMarket(result, market, years) { const bases = result.summaries.filter((row) => row.market === market); if (!bases.length) return []; const rows = bases.map((base) => ({ ...base, market: "전체 기간", annualReturn: annualizedReturn(base) })); for (const year of [...years].sort((a, b) => a - b)) { const periodRows = comparisonRowsForYear(result, String(year), "annualReturn").filter((item) => item.market === market); rows.push(...periodRows.map((row) => ({ ...row, market: `${year}년` }))); } return rows; }
 
 async function loadUpbitSummary() {
@@ -75345,9 +75352,9 @@ async function renderUpbitSummary(result) {
     const bitcoinReturns = new Map(result.summaries.filter((row) => row.market === "KRW-BTC").map((row) => [row.strategy, row.totalReturn]));
     const returnYearSelect = document.querySelector("#return-comparison-year"), annualMarketSelect = document.querySelector("#annual-return-comparison-market"), comparisonYears = availableComparisonYears(result), annualMarkets = [...new Set(result.summaries.map((row) => row.market))], previousAnnualMarket = annualMarketSelect.value || "KRW-BTC";
     fillComparisonYearSelect(returnYearSelect, comparisonYears); annualMarketSelect.innerHTML = annualMarkets.map((market) => `<option value="${market}">${market.replace("KRW-", "")}</option>`).join(""); annualMarketSelect.value = annualMarkets.includes(previousAnnualMarket) ? previousAnnualMarket : annualMarkets.includes("KRW-BTC") ? "KRW-BTC" : annualMarkets[0];
-    const renderYearComparisons = () => { drawComparisonChart(document.querySelector("#return-comparison"), comparisonRowsForYear(result, returnYearSelect.value, "totalReturn"), "totalReturn"); drawComparisonChart(document.querySelector("#annual-return-comparison"), annualRowsForMarket(result, annualMarketSelect.value, comparisonYears), "annualReturn"); };
+    const renderYearComparisons = () => { drawComparisonChart(document.querySelector("#return-comparison"), groupComparisonRowsByCoin(comparisonRowsForYear(result, returnYearSelect.value, "totalReturn")), "totalReturn"); drawComparisonChart(document.querySelector("#annual-return-comparison"), annualRowsForMarket(result, annualMarketSelect.value, comparisonYears), "annualReturn"); };
     returnYearSelect.onchange = renderYearComparisons; annualMarketSelect.onchange = renderYearComparisons; renderYearComparisons();
-    drawComparisonChart(document.querySelector("#mdd-comparison"), result.summaries, "maxDrawdown");
+    drawComparisonChart(document.querySelector("#mdd-comparison"), groupComparisonRowsByCoin(result.summaries), "maxDrawdown");
     const markets = [...new Set(result.summaries.map((row) => row.market))];
     marketSelect.innerHTML = [...new Set(result.summaries.map((row) => row.market))]
       .map((value) => `<option value="${value}">${value.replace("KRW-", "")}</option>`).join("");
@@ -75570,7 +75577,10 @@ function drawComparisonChart(svg, rows, metric) {
   const right = 650;
   const top = 32;
   const rowGap = 37;
-  const plotBottom = top + rows.length * rowGap;
+  const groupGap = 14;
+  const groups = [...new Set(rows.map((row) => row.market))];
+  const groupIndexByMarket = new Map(groups.map((market, index) => [market, index]));
+  const plotBottom = top + rows.length * rowGap + Math.max(0, groups.length - 1) * groupGap;
   const svgHeight = Math.max(430, plotBottom + 35);
   svg.setAttribute("viewBox", `0 0 760 ${svgHeight}`);
   const x = (value) => left + (value - minimum) / span * (right - left);
@@ -75582,7 +75592,12 @@ function drawComparisonChart(svg, rows, metric) {
     const valueX = x(value);
     const barX = isReturn ? Math.min(zero, valueX) : left;
     const width = Math.max(2, isReturn ? Math.abs(valueX - zero) : valueX - left);
-    const y = top + index * rowGap;
+    const groupIndex = groupIndexByMarket.get(row.market) || 0;
+    const y = top + index * rowGap + groupIndex * groupGap;
+    const groupStart = index === 0 || rows[index - 1].market !== row.market;
+    const groupLength = groupStart ? rows.slice(index).findIndex((item) => item.market !== row.market) : 0;
+    const normalizedGroupLength = groupStart ? (groupLength === -1 ? rows.length - index : groupLength) : 0;
+    const groupBand = groupStart ? `<rect class="coin-group-band${groupIndex % 2 ? " is-alt" : ""}" x="6" y="${y - 8}" width="748" height="${normalizedGroupLength * rowGap - 2}" rx="8"><title>${row.market.replace("KRW-", "")} · MACD 1·2·3 비교 그룹</title></rect>` : "";
     const strategyCss = row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
     const css = isReturn ? `${value >= 0 ? "bar-positive" : "bar-negative"} ${strategyCss}` : strategyCss;
     const textX = isReturn ? 748 : valueX + 7;
@@ -75593,7 +75608,7 @@ function drawComparisonChart(svg, rows, metric) {
       ? `<tspan class="coin-id">${marketLabel}</tspan>`
       : `<tspan class="coin-id">${marketLabel}</tspan><tspan class="strategy-id">｜${strategyLabel}</tspan>`;
     const fullDescription = strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : row.strategy;
-    return `<text class="chart-label" x="178" y="${y + 15}" text-anchor="end" aria-label="${marketLabel} · ${fullDescription}">${rowLabel}</text><rect class="${css}" x="${barX}" y="${y}" width="${width}" height="20" rx="3"><title>${marketLabel} · ${fullDescription}: ${percent(isReturn ? value : -value)}</title></rect><text class="chart-value" x="${textX}" y="${y + 15}" text-anchor="${anchor}">${percent(isReturn ? value : -value)}</text>`;
+    return `${groupBand}<text class="chart-label" x="178" y="${y + 15}" text-anchor="end" aria-label="${marketLabel} · ${fullDescription}">${rowLabel}</text><rect class="${css}" x="${barX}" y="${y}" width="${width}" height="20" rx="3"><title>${marketLabel} · ${fullDescription}: ${percent(isReturn ? value : -value)}</title></rect><text class="chart-value" x="${textX}" y="${y + 15}" text-anchor="${anchor}">${percent(isReturn ? value : -value)}</text>`;
   }).join("");
   const chartTitle = metric === "annualReturn" ? "종목별 연평균 복리수익률" : isReturn ? "종목별 총수익률" : "종목별 최대낙폭";
   svg.innerHTML = `<title>${chartTitle}</title>${grid}${isReturn ? `<line class="chart-zero" x1="${zero}" y1="20" x2="${zero}" y2="${plotBottom}"/>` : ""}${bars}`;
