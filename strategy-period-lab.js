@@ -1,5 +1,7 @@
 (function () {
-  const STRATEGY_KEY = "coin-signal-custom-strategies-v2", HISTORY_KEY = "coin-signal-strategy-history-v2";
+  const IS_FUTURES_MODE = /(^|\/)futures(\/|$)/i.test(window.location.pathname) || new URLSearchParams(window.location.search).get("mode") === "futures";
+  const STRATEGY_KEY = IS_FUTURES_MODE ? "coin-signal-custom-strategies-futures-v1" : "coin-signal-custom-strategies-v2";
+  const HISTORY_KEY = IS_FUTURES_MODE ? "coin-signal-strategy-history-futures-v1" : "coin-signal-strategy-history-v2";
   const DAY_MS = 86_400_000, INITIAL_EQUITY = 100_000_000;
   const MARKETS = ["KRW-BTC", "KRW-ETH", "KRW-XRP", "KRW-SOL", "KRW-ADA", "KRW-DOGE", "KRW-AVAX", "KRW-DOT", "KRW-XLM", "KRW-UNI", "KRW-LINK", "KRW-ONDO"];
   const INDICATORS = {
