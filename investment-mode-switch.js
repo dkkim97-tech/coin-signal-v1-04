@@ -51,7 +51,7 @@
     if (title) title.insertAdjacentHTML("beforeend", '<span class="futures-title-tag">선물</span>');
     const notice = document.createElement("div");
     notice.className = "futures-mode-notice";
-    notice.innerHTML = "<strong>선물 투자 앱 독립 개발 영역</strong> · MACD(18,39,9) 기준 MACD 4는 1배, MACD 5는 2배, MACD 6은 5배 롱·숏을 강한 신호 구간에 적용합니다. MACD 5·6은 일봉 고가·저가에서 계좌 가치가 0 이하가 되면 청산 처리합니다. 펀딩비와 거래소별 유지증거금률은 미반영입니다.";
+    notice.innerHTML = "<strong>선물 투자 앱 독립 개발 영역</strong> · MACD(18,39,9) 기준 MACD 5는 0선 상향돌파 후 첫 골든크로스 구간에만 롱 2배를 적용합니다. 그 외 구간은 MACD 4의 1배·50% 기본 비중을 따릅니다. 일봉 고가·저가에서 계좌 가치가 0 이하가 되면 청산 처리하며, 펀딩비와 거래소별 유지증거금률은 미반영입니다.";
     header.insertAdjacentElement("afterend", notice);
   }
 })();
