@@ -3,19 +3,26 @@
   const params = new URLSearchParams(window.location.search);
   const isFuturesPath = /(^|\/)futures(\/|$)/i.test(path);
   const isFutures = isFuturesPath || params.get("mode") === "futures";
-  const fileName = path.split("/").filter(Boolean).pop() || "index.html";
   let target;
   if (isFutures) {
     params.delete("mode");
     const query = params.toString();
-    target = isFuturesPath ? `../${fileName}${query ? `?${query}` : ""}` : `${fileName}${query ? `?${query}` : ""}`;
+    if (isFuturesPath) {
+      const spotPath = path.replace(/(^|\/)futures(?=\/|$)/i, "") || "/";
+      target = `${spotPath.startsWith("/") ? spotPath : `/${spotPath}`}${query ? `?${query}` : ""}`;
+    } else {
+      const fileName = path.split("/").filter(Boolean).pop() || "index.html";
+      target = `${fileName}${query ? `?${query}` : ""}`;
+    }
   } else {
     const isLocal = window.location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+    const fileName = path.split("/").filter(Boolean).pop() || "index.html";
     if (isLocal) {
       params.set("mode", "futures");
       target = `${fileName}?${params.toString()}`;
     } else {
-      target = `futures/${fileName}${window.location.search}`;
+      const spotPath = path === "/" ? "/" : path;
+      target = `/futures${spotPath}${window.location.search}`;
     }
   }
   const header = document.querySelector("header");

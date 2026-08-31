@@ -392,6 +392,6 @@ function formatDate(timestamp){return new Date(timestamp).toLocaleDateString("ko
 function formatKrw(value){return `₩${new Intl.NumberFormat("ko-KR",{maximumFractionDigits:value<100?2:0}).format(value)}`;}
 function formatRatio(value){return `${value>=10?value.toFixed(1):value.toFixed(2)}×`;}
 </script>
-  <script src="investment-mode-switch.js?v=1.1"></script>
+  <script src="investment-mode-switch.js?v=1.4"></script>
 </body>
 </html>

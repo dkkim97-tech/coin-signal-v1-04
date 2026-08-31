@@ -16,7 +16,7 @@
 
   button.textContent = "↻ 전체 코인 최신 자료 다운로드 및 차트 갱신";
   button.addEventListener("click", refreshAllMarkets, true);
-  restoreMarketSnapshot(data.market, true);
+  restoreMarketSnapshot(data.market, true).finally(() => repairCurrentMarketWindow());
   channel?.addEventListener("message", (event) => {
     if (event.data?.type === "market-updated" && event.data.market === data.market) restoreMarketSnapshot(data.market, true);
   });
@@ -95,6 +95,35 @@
       const snapshot = await getSnapshot(market);
       if (snapshot) applySnapshot(snapshot, announce);
     } catch {}
+  }
+
+  async function repairCurrentMarketWindow() {
+    if (!needsWindowRepair(data.candles?.d1 || [])) return;
+    status.textContent = `${data.market.replace("KRW-", "")} · 누락된 연속 봉 자동 복구 중…`;
+    try {
+      const synced = await syncMarketThroughSupabase(data.market);
+      const incoming = Object.fromEntries(Object.entries(synced.timeframes || {}).map(([timeframe, result]) => [timeframe, result.candles || []]));
+      const previous = await getSnapshot(data.market);
+      const snapshot = {
+        market: data.market,
+        updatedAt: synced.syncedAt || new Date().toISOString(),
+        source: "supabase-window-repair",
+        candles: Object.fromEntries(Object.keys(incoming).map((timeframe) => [timeframe, mergeCandles(previous?.candles?.[timeframe] || [], incoming[timeframe])])),
+      };
+      await putSnapshot(snapshot);
+      applySnapshot(snapshot, false);
+      status.textContent = `${data.market.replace("KRW-", "")} · 최근 6개월 연속 봉 자동 복구 완료`;
+    } catch (error) {
+      status.textContent = `${data.market.replace("KRW-", "")} · 자동 복구 실패, 갱신 버튼으로 다시 시도해 주세요`;
+    }
+  }
+
+  function needsWindowRepair(candles) {
+    if (!candles.length) return true;
+    const day = 86_400_000;
+    const recent = candles.map((row) => Number(row[0])).filter(Number.isFinite).sort((a, b) => a - b).filter((timestamp) => timestamp >= Date.now() - 220 * day);
+    if (!recent.length || recent.at(-1) < Date.now() - 2.5 * day) return true;
+    return recent.some((timestamp, index) => index > 0 && timestamp - recent[index - 1] > 1.5 * day);
   }
 
   function applySnapshot(snapshot, announce) {
