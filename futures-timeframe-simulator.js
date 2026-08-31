@@ -95,6 +95,21 @@
     const cacheKey = `${market}|${timeframe}|${requestedCount}`;
     if (cache.has(cacheKey)) return cache.get(cacheKey);
     const config = TIMEFRAMES[timeframe];
+    try {
+      onProgress(0);
+      const proxy = await fetch(`/api/candles?${new URLSearchParams({ market, timeframe, count: String(requestedCount) })}`, { cache: "no-store" });
+      if (proxy.ok) {
+        const payload = await proxy.json();
+        if (Array.isArray(payload.candles) && payload.candles.length) {
+          const candles = payload.candles.map((candle) => ({ timestamp: Number(candle.timestamp), open: Number(candle.open), high: Number(candle.high), low: Number(candle.low), close: Number(candle.close) })).filter((candle) => Number.isFinite(candle.timestamp) && candle.open > 0 && candle.high > 0 && candle.low > 0 && candle.close > 0).sort((a, b) => a.timestamp - b.timestamp).slice(-requestedCount);
+          onProgress(candles.length);
+          cache.set(cacheKey, candles);
+          return candles;
+        }
+      }
+    } catch {}
+
+    // 로컬 정적 서버에서는 Vercel API가 없으므로 Upbit 공개 API를 직접 사용합니다.
     const rows = new Map();
     const fetchTarget = requestedCount + 1;
     let to = null;
