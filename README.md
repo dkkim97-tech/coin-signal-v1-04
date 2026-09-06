@@ -1,4 +1,17 @@
-# 마이웨이 75 · 코인 시그널 V1.15
+# 마이웨이 75 · 코인 시그널 V1.16
+
+V1.16은 기존 화면에 BTC Position Management를 추가합니다. 기존 MACD 1~5 전략은 유지됩니다.
+
+- 기본 목표: 0선 아래 Golden 50% / Dead 0%, 위 Golden 100% / Dead 50%. 기본 MACD 12/26/9.
+- 3일 고정가격 투영과 과거 유사 사례 확률을 분리하며, 80% 기준·최소 30표본을 함께 적용합니다.
+- ADR5 잔여 비중 5분할, Core 3 / Opportunity 2, 일별 재계산 및 Paper 주문 이력을 제공합니다.
+- Pattern / Multi Envelope, Training·Validation·OOS 및 Walk Forward 비교를 제공합니다.
+- 새 모듈은 Upbit 원본 UTC 일봉을 사용합니다. 기존 KST 차트 데이터와 혼합하지 않습니다.
+- SIMULATION이 기본입니다. Paper는 브라우저가 열릴 때 완료된 일봉으로 순차 평가합니다. 실제 거래소 주문·대여는 연결되지 않습니다.
+- ETF는 사용자 제공 순유입 JSON을 분석할 수 있고, 청산 피드는 미연결 상태를 표시합니다.
+
+실행: `npm start` → `http://127.0.0.1:4186/futures/`. 검증: `npm test`, `npm run verify`.
+구현 범위, 계산 정의, 검증 제약과 Phase별 보고: [docs/position-management.md](docs/position-management.md).
 
 Upbit KRW 12종목의 MACD·RSI 백테스트, MACD 1·2·3 자산곡선 비교, 최근 20봉 유사 패턴 분석을 제공하는 정적 웹 앱입니다.
 
