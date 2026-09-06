@@ -18,6 +18,7 @@ const server=http.createServer(async(req,res)=>{
     const result=await controller.serial(async()=>{
       switch(b.action) {
         case 'status':return controller.status(b.exchange);
+        case 'automation':return controller.automation(b.exchange,b.on);
         case 'preview':return controller.preview(b);
         case 'arm':return controller.arm(b.quoteId);
         case 'stop':return controller.stop(b.exchange,b.coin);

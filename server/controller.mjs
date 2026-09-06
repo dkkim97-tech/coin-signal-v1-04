@@ -6,7 +6,27 @@ const id=()=>randomUUID().replaceAll('-','');
 export class Controller {
   constructor(store,{env=process.env,exchangeFactory=e=>new Exchange(e,{env}),clock=Date.now,decisionFactory=decide}={}) {this.store=store;this.env=env;this.exchangeFactory=exchangeFactory;this.clock=clock;this.decide=decisionFactory;this.queue=Promise.resolve();}
   serial(fn) {const next=this.queue.then(fn);this.queue=next.catch(()=>{});return next;}
-  enabled(exchange) {return this.env.TRADING_ENABLED==='true'&&(exchange!=='bitget'||this.env.BITGET_DEMO==='true'||this.env.BITGET_LIVE_ENABLED==='true');}
+  serverEnabled(exchange) {return this.env.TRADING_ENABLED==='true'&&(exchange!=='bitget'||this.env.BITGET_DEMO==='true'||this.env.BITGET_LIVE_ENABLED==='true');}
+  enabled(exchange) {return this.serverEnabled(exchange)&&this.store.get('automation',exchange)?.on===true;}
+  async automation(exchange,on) {
+    if(typeof on!=='boolean')throw Error('자동매매 ON/OFF 값이 필요합니다.');
+    if(on){
+      if(!this.serverEnabled(exchange))throw Error('서버의 실주문/데모 실행 설정이 꺼져 있습니다.');
+      this.assertConnection(exchange);
+      if(this.activeOrders(exchange).length||this.store.all('campaigns').some(c=>c.exchange===exchange&&c.status!=='STOPPED'))throw Error('기존 종목의 중지 및 미체결 취소를 먼저 확인하세요.');
+    }
+    // Persist OFF before any network call. Failed cancellation never restores ON.
+    this.store.put('automation',exchange,{on,at:this.clock()});
+    this.audit(on?'AUTOMATION_ON':'AUTOMATION_OFF',{exchange});
+    if(!on){
+      const campaigns=this.store.all('campaigns').filter(c=>c.exchange===exchange&&c.status!=='STOPPED');
+      for(const c of campaigns)this.store.put('campaigns',exchange+':'+c.coin,{...c,status:'STOPPING'});
+      this.assertConnection(exchange);
+      await this.reconcile(this.exchangeFactory(exchange),undefined,true);
+      for(const c of campaigns)this.store.put('campaigns',exchange+':'+c.coin,{...c,status:'STOPPED'});
+    }
+    return this.status(exchange);
+  }
   assertConnection(exchange) {
     const fingerprint=createHash('sha256').update(exchange+':'+(exchange==='bitget'&&this.env.BITGET_DEMO==='true'?'demo':'live')+':'+(this.env[exchange.toUpperCase()+'_API_KEY']||'unconfigured')).digest('hex');
     let prior=this.store.get('connection',exchange);
@@ -54,7 +74,7 @@ export class Controller {
     const plan=makePlan({...selected,limits,snapshot,meta:snapshot.meta,decision,now:this.clock()});
     const quote={...plan,id:id(),limits,connectionId};this.store.put('quotes',quote.id,quote);return quote;
   }
-  status(exchange) {return {policy:POLICY,enabled:this.enabled(exchange),demo:exchange==='bitget'&&this.env.BITGET_DEMO==='true',limits:this.store.get('limits',exchange),account:this.store.get('account',exchange),campaigns:this.store.all('campaigns').filter(c=>c.exchange===exchange),orders:this.store.all('orders').filter(o=>o.exchange===exchange).slice(-100),audit:this.store.all('audit').filter(a=>a.exchange===exchange).slice(-30)};}
+  status(exchange) {return {policy:POLICY,enabled:this.enabled(exchange),serverEnabled:this.serverEnabled(exchange),automationOn:this.store.get('automation',exchange)?.on===true,demo:exchange==='bitget'&&this.env.BITGET_DEMO==='true',limits:this.store.get('limits',exchange),account:this.store.get('account',exchange),campaigns:this.store.all('campaigns').filter(c=>c.exchange===exchange),orders:this.store.all('orders').filter(o=>o.exchange===exchange).slice(-100),audit:this.store.all('audit').filter(a=>a.exchange===exchange).slice(-30)};}
   async arm(quoteId) {
     const quote=this.store.get('quotes',quoteId);if(!quote||quote.expires<this.clock()||quote.consumed)throw Error('미리보기가 만료되었거나 이미 실행되었습니다.');
     if(!this.enabled(quote.exchange))throw Error('서버의 실주문/데모 실행 설정이 꺼져 있습니다.');
@@ -104,6 +124,7 @@ export class Controller {
           if((o.side==='sell'&&!quantity.gt(0))||(o.side==='buy'&&!quantity.lt(0))||D(o.qty).gt(quantity.abs()))throw Error('청산 가능 수량 변경');
           if(e.exchange==='korbit'&&D(o.qty).gt(position.available))throw Error('매도 가능 수량 부족');
         }
+        if(!this.enabled(e.exchange))throw Error('자동매매 OFF: 주문 중지');
         this.store.put('orders',o.clientId,{...o,status:'SUBMITTING',attempted:true});
         const ack=await e.place(o.coin,o,o.clientId);this.store.put('orders',o.clientId,{...o,id:ack.orderId?String(ack.orderId):undefined,status:'ACK',attempted:true});
         this.audit('ORDER_ACCEPTED',{exchange:e.exchange,coin:o.coin,clientId:o.clientId});

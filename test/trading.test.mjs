@@ -73,7 +73,7 @@ test('durable order journal survives restart; serialized tasks do not overlap',a
 test('ambiguous placement is journaled before POST and is never automatically retried',async()=>{
   const s=new Store(':memory:'),calls=[];s.put('limits','bitget',input().limits);
   const e={exchange:'bitget',snapshot:async()=>snapshot(),place:async()=>{calls.push(s.all('orders').some(o=>o.status==='SUBMITTING'));throw Error('timeout');},order:async()=>{throw Error('not found yet');}};
-  const c=new Controller(s,{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});
+  const c=new Controller((s.put('automation','bitget',{on:true}),s),{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});
   const plan=makePlan(input());await assert.rejects(c.submit(e,plan,{}));assert.deepEqual(calls,[true]);assert.equal(c.activeOrders('bitget').length,1);await assert.rejects(c.reconcile(e));assert.equal(calls.length,1);s.close();
 });
 test('cancel ACK is not terminal; a replacement waits until exchange cancellation is confirmed',async()=>{
@@ -84,7 +84,7 @@ test('cancel ACK is not terminal; a replacement waits until exchange cancellatio
 test('activation requires explicit server enablement and an unused unexpired preview',async()=>{
   const s=new Store(':memory:'),q={...makePlan(input()),id:'quote',limits:input().limits};s.put('quotes',q.id,q);
   let c=new Controller(s,{env:{},clock:()=>now});await assert.rejects(c.arm(q.id),/꺼져/);
-  c=new Controller(s,{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});s.put('quotes',q.id,{...q,connectionId:c.assertConnection('bitget')});await c.arm(q.id);await assert.rejects(c.arm(q.id),/이미/);s.close();
+  c=new Controller((s.put('automation','bitget',{on:true}),s),{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});s.put('quotes',q.id,{...q,connectionId:c.assertConnection('bitget')});await c.arm(q.id);await assert.rejects(c.arm(q.id),/이미/);s.close();
 });
 test('HMAC sessions reject modifications, expiry, missing/weak secrets',()=>{
   const secret='s'.repeat(32),token=session(secret,now);assert.ok(authenticated(token,secret,now));assert.ok(!authenticated(token+'x',secret,now));assert.ok(!authenticated(token,secret,now+1800001));assert.ok(!authenticated(token,'weak',now));
@@ -141,7 +141,7 @@ test('D-5 to D-1 cancels confirmed remainder, keeps equal ladder, and D0 uses on
   const remote=new Map(),history=[];
   const fill=o=>{if(o.status==='filled')return;o.filled=o.qty;o.remaining='0';o.status='filled';const change=D(o.qty).mul(o.side==='buy'?1:-1);q=q.add(change);cash=cash.sub(change.mul(100));};
   const e={exchange:'bitget',snapshot:async()=>({...snapshot(),at:t,positions:q.isZero()?[]:[{coin:'BTC',qty:q.toFixed(),price:'100'}],available:cash.toFixed(),equity:cash.add(q.mul(100)).toFixed(),pending:[...remote.values()].filter(o=>!terminal(o.status)).map(o=>({...o,reservePrice:o.price}))}),order:async(_,cid)=>({...remote.get(cid)}),cancel:async(_,cid)=>{remote.get(cid).status='cancelled';},place:async(_,o,cid)=>{const r={...o,clientId:cid,id:String(++counter),coin:'BTC',status:'live',filled:'0',remaining:o.qty};remote.set(cid,r);history.push(r);if(o.timeInForce==='ioc')fill(r);return {orderId:r.id};}};
-  const c=new Controller(s,{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},exchangeFactory:()=>e,clock:()=>t,decisionFactory:()=>next});c.candles=async()=>[];
+  const c=new Controller((s.put('automation','bitget',{on:true}),s),{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},exchangeFactory:()=>e,clock:()=>t,decisionFactory:()=>next});c.candles=async()=>[];
   const campaign={exchange:'bitget',coin:'BTC',strategy:3,status:'ARMED',initial:true};s.put('campaigns','bitget:BTC',campaign);
   await c.tick();assert.equal(history.length,5);fill(history[0]);fill(history[1]);const held=q;
   for(let d=1;d<5;d++){t+=DAY;next={...next,bar:next.bar+DAY};await c.tick();const last=history.slice(-5);assert.ok(last.every(o=>o.timeInForce==='gtc'));const gap=D(last[1].price).sub(last[0].price);for(let i=2;i<5;i++)assert.ok(D(last[i].price).sub(last[i-1].price).eq(gap));assert.ok(q.eq(held));}
@@ -152,7 +152,7 @@ test('D-5 to D-1 cancels confirmed remainder, keeps equal ladder, and D0 uses on
 test('every order is checked against changed external positions before sending next split',async()=>{
   const s=new Store(':memory:');s.put('limits','bitget',input().limits);let placed=0;
   const e={exchange:'bitget',snapshot:async()=>({...snapshot(),positions:placed?[{coin:'ETH',qty:'100',price:'100'}]:[]}),order:async()=>({status:'filled',filled:'1',remaining:'0'}),place:async()=>{placed++;return {orderId:'1'};}};
-  const c=new Controller(s,{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});await assert.rejects(c.submit(e,makePlan(input()),{}),/한도 초과/);assert.equal(placed,1);s.close();
+  const c=new Controller((s.put('automation','bitget',{on:true}),s),{env:{TRADING_ENABLED:'true',BITGET_DEMO:'true'},clock:()=>now});await assert.rejects(c.submit(e,makePlan(input()),{}),/한도 초과/);assert.equal(placed,1);s.close();
 });
 test('switching demo/live or API accounts cannot resume a previously armed campaign',()=>{
   const s=new Store(':memory:'),env={BITGET_DEMO:'true',BITGET_API_KEY:'demo-key'},c=new Controller(s,{env});c.assertConnection('bitget');s.put('campaigns','bitget:BTC',{exchange:'bitget',coin:'BTC',status:'ARMED'});

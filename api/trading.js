@@ -20,7 +20,7 @@ export default async function handler(req,res) {
     if(body.action==='logout') {res.setHeader('Set-Cookie','trade_session=; HttpOnly; Secure; SameSite=Strict; Path=/api/trading; Max-Age=0');return res.status(200).json({authenticated:false});}
     const token=String(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('trade_session='))?.slice(14)||'';
     if(!authenticated(token,env.TRADE_OPERATOR_TOKEN))return res.status(401).json({error:'관리자 접속이 필요하거나 세션이 만료되었습니다.'});
-    if(!['status','preview','arm','stop','limits'].includes(body.action))throw Error('지원하지 않는 명령');
+    if(!['status','preview','arm','stop','limits','automation'].includes(body.action))throw Error('지원하지 않는 명령');
     const url=new URL(env.TRADE_GATEWAY_URL);if(url.protocol!=='https:'&&!(env.NODE_ENV!=='production'&&['localhost','127.0.0.1'].includes(url.hostname)))throw Error('실행 서버는 HTTPS가 필요합니다.');
     const upstream=await fetch(new URL('/command',url),{method:'POST',headers:{Authorization:'Bearer '+env.TRADE_GATEWAY_TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
     const data=await upstream.json();return res.status(upstream.ok?200:400).json(data);
