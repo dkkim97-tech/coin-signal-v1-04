@@ -58,7 +58,7 @@
     if (title) title.insertAdjacentHTML("beforeend", '<span class="futures-title-tag">선물</span>');
     const notice = document.createElement("div");
     notice.className = "futures-mode-notice";
-    notice.innerHTML = "<strong>비트겟 선물 · 과거 분석 자료</strong> · MACD(18,39,9) 기준 MACD 5·6은 0선 위 골든 롱 2배·0선 아래 데드 숏 2배입니다. 위 데드/아래 골든은 MACD 5가 롱 50%/50%, MACD 6이 롱 50%/미보유입니다. 일봉 고가·저가에서 계좌 가치가 0 이하가 되면 청산 처리하며, 펀딩비와 거래소별 유지증거금률은 미반영입니다.";
+    notice.innerHTML = "<strong>비트겟 선물 · 과거 분석 자료</strong> · MACD(18,39,9) 기준 MACD 5은 0선 위 골든 롱 2배·0선 아래 데드 숏 2배입니다. 위 데드와 아래 골든은 롱 50%입니다. 일봉 고가·저가에서 계좌 가치가 0 이하가 되면 청산 처리하며, 펀딩비와 거래소별 유지증거금률은 미반영입니다.";
     header.insertAdjacentElement("afterend", notice);
   }
 })();

@@ -102,21 +102,22 @@ test('MACD 5 above-zero golden is 2x; closed data is mandatory',()=>{
   assert.throws(()=>decide([],5),/400/);
 });
 
-test('MACD 5/6 use all four regimes regardless of first-cross history',()=>{
-  for(const n of [5,6])for(const armed of [true,false])for(const active of [true,false]){
-    const targets=n===5?[2,.5,.5,-2]:[2,.5,0,-2];
+test('MACD 5 use all four regimes regardless of first-cross history',()=>{
+  for(const n of [5])for(const armed of [true,false])for(const active of [true,false]){
+    const targets=[2,.5,.5,-2];
     [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([line,histogram],i)=>{
       const r={line,histogram,signal:line-histogram,rsi:50};
       assert.equal(nextState({target:0,armed,active},r,r,n).target,targets[i]);
     });
   }
-  assert.equal(selection('bitget','BTC',6).strategy,6);
+  assert.throws(()=>selection('bitget','BTC',6));
+  assert.throws(()=>prepare([],6),/지원하지/);
   for(const n of [4,5,6])assert.throws(()=>selection('korbit','BTC',n));
   assert.throws(()=>selection('bitget','BTC',7));
 });
 
-test('MACD 5/6 short 2x obeys both gross caps and closes long before reversal',()=>{
-  for(const strategy of [5,6]){
+test('MACD 5 short 2x obeys both gross caps and closes long before reversal',()=>{
+  for(const strategy of [5]){
     const config={...input(),strategy,decision:{kind:'CONFIRMED',target:-2}};
     const p=makePlan(config);assert.equal(p.budget,'2500');assert.equal(p.targetQty,'-50');
     assert.equal(p.orders.length,5);assert.ok(p.orders.every(o=>o.side==='sell'&&!o.reduceOnly));
@@ -127,13 +128,7 @@ test('MACD 5/6 short 2x obeys both gross caps and closes long before reversal',(
   }
 });
 
-test('MACD 6 below golden flattens shorts and above dead targets 50% of capped capital',()=>{
-  const s=snapshot();s.positions=[{coin:'BTC',qty:'-10',price:'100'}];
-  const flat=makePlan({...input(),strategy:6,snapshot:s,decision:{kind:'CONFIRMED',target:0}});
-  assert.equal(flat.targetQty,'0');assert.ok(flat.orders.every(o=>o.reduceOnly&&o.side==='buy'));
-  const long=makePlan({...input(),strategy:6,decision:{kind:'CONFIRMED',target:.5}});assert.equal(long.targetQty,'12.5');
-  assert.throws(()=>makePlan({...input(),strategy:6,decision:{target:1}}),/목표/);
-});
+
 test('D5 predictions use matured history only and optimized latest matches full research',()=>{
   const candles=Array.from({length:450},(_,i)=>{const close=100+Math.sin(i/9)*8+i*.01;return {timestamp:now-(450-i)*DAY,open:close,high:close+2,low:close-2,close,volume:10};});
   const full=prepare(candles,5),fast=prepare(candles,5,{latestOnly:true});assert.deepEqual(fast.predictions.at(-1),full.predictions.at(-1));

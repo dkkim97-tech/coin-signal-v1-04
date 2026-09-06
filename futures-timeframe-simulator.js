@@ -12,7 +12,6 @@
     { id: "MACD 4", name: "MACD(18,39,9) 롱·숏", color: "#4ca6ff" },
     { id: "MACD 5", name: "롱·숏 2배", color: "#ff5fb7" },
   ];
-  STRATEGIES.push({id:"MACD 6",name:"롱 2배·50%·미보유·숏 2배",color:"#e8d66b"});
   const TIMEFRAMES = {
     day: { label: "일봉", endpoint: "days", milliseconds: 86400000 },
     240: { label: "4시간봉", endpoint: "minutes/240", milliseconds: 14400000 },
@@ -29,7 +28,7 @@
     .tf-simulator-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:17px}.tf-simulator-head h2{margin:3px 0 7px;font-size:24px}.tf-simulator-head p{margin:0;color:var(--muted);line-height:1.6}.tf-simulator-badge{white-space:nowrap;border:1px solid rgba(76,166,255,.55);border-radius:999px;padding:8px 12px;color:#8fd0ff;background:rgba(76,166,255,.09);font-size:12px;font-weight:850}
     .tf-controls{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr)) auto;gap:11px;align-items:end;padding:14px;border:1px solid var(--line);border-radius:12px;background:#090f10}.tf-controls label{display:grid;gap:6px;color:var(--muted);font-size:12px}.tf-controls select,.tf-controls button{min-height:42px;border:1px solid #34504b;border-radius:9px;background:#0c1515;color:var(--text);padding:0 12px;font:inherit}.tf-controls button{border-color:#4ca6ff;background:#4ca6ff;color:#06101a;font-weight:900;cursor:pointer}.tf-controls button:disabled{opacity:.55;cursor:wait}
     .tf-status{margin:12px 2px;color:#9fb8b1;font-size:13px}.tf-status.is-error{color:#ff8c84}.tf-result-meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.tf-result-meta span{padding:6px 9px;border-radius:7px;background:#111c1b;color:#b9cdc7;font-size:12px}
-    .tf-summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:14px 0}.tf-summary-card{padding:12px;border:1px solid var(--line);border-top:3px solid var(--strategy-color);border-radius:10px;background:#0a1111}.tf-summary-card span,.tf-summary-card small{display:block;color:var(--muted);font-size:11px}.tf-summary-card strong{display:block;margin:7px 0 5px;color:var(--strategy-color);font-size:19px}.tf-summary-card em{font-style:normal;color:var(--text);font-size:12px}
+    .tf-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:14px 0}.tf-summary-card{padding:12px;border:1px solid var(--line);border-top:3px solid var(--strategy-color);border-radius:10px;background:#0a1111}.tf-summary-card span,.tf-summary-card small{display:block;color:var(--muted);font-size:11px}.tf-summary-card strong{display:block;margin:7px 0 5px;color:var(--strategy-color);font-size:19px}.tf-summary-card em{font-style:normal;color:var(--text);font-size:12px}
     .tf-chart-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#070c0d}.tf-chart{display:block;width:100%;min-width:760px;height:auto}.tf-table-wrap{overflow:auto;margin-top:13px;max-height:390px;border:1px solid var(--line);border-radius:11px}.tf-table{width:100%;border-collapse:collapse;font-size:12px}.tf-table th{position:sticky;top:0;background:#111b1a;color:#9fb8b1;z-index:1}.tf-table th,.tf-table td{padding:10px 9px;border-bottom:1px solid #20302d;text-align:right;white-space:nowrap}.tf-table th:first-child,.tf-table td:first-child{text-align:left}.tf-positive{color:#72f2bd}.tf-negative{color:#ff776f}.tf-note{margin:12px 0 0;color:#839a94;font-size:11px;line-height:1.65}
     @media(max-width:900px){.tf-controls{grid-template-columns:repeat(2,1fr)}.tf-summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.tf-simulator{padding:15px}.tf-simulator-head{display:block}.tf-simulator-badge{display:inline-block;margin-top:10px}.tf-controls{grid-template-columns:1fr}.tf-summary-grid{grid-template-columns:1fr}}
   `;
@@ -39,16 +38,16 @@
   section.className = "tf-simulator";
   section.id = "futures-timeframe-simulator";
   section.innerHTML = `
-    <div class="tf-simulator-head"><div><p class="eyebrow">MULTI-TIMEFRAME FUTURES LAB</p><h2>일봉 · 4시간봉 · 1시간봉 MACD 1~6 시뮬레이션</h2><p>종목과 봉 주기를 선택하면 동일한 체결 원칙으로 여섯 전략을 동시에 다시 계산합니다.</p></div><span class="tf-simulator-badge">선물 투자 전용</span></div>
+    <div class="tf-simulator-head"><div><p class="eyebrow">MULTI-TIMEFRAME FUTURES LAB</p><h2>일봉 · 4시간봉 · 1시간봉 MACD 1~5 시뮬레이션</h2><p>종목과 봉 주기를 선택하면 동일한 체결 원칙으로 다섯 전략을 동시에 다시 계산합니다.</p></div><span class="tf-simulator-badge">선물 투자 전용</span></div>
     <div class="tf-controls">
       <label>종목<select id="tf-market">${MARKETS.map((symbol) => `<option value="KRW-${symbol}">${symbol}</option>`).join("")}</select></label>
       <label>봉 주기<select id="tf-timeframe"><option value="day">일봉</option><option value="240">4시간봉</option><option value="60">1시간봉</option></select></label>
       <label>분석 봉 수<select id="tf-count"><option value="200">최근 200봉</option><option value="500">최근 500봉</option><option value="1000" selected>최근 1,000봉</option><option value="2000">최근 2,000봉</option></select></label>
       <label>초기 자산<select id="tf-capital"><option value="100000000">1억원</option><option value="10000000">1천만원</option><option value="1000000">1백만원</option></select></label>
-      <button id="tf-run" type="button">MACD 1~6 시뮬레이션</button>
+      <button id="tf-run" type="button">MACD 1~5 시뮬레이션</button>
     </div>
     <p id="tf-status" class="tf-status">BTC · 최근 1,000개 일봉 기준으로 실행할 수 있습니다.</p>
-    <div id="tf-output" hidden><div id="tf-meta" class="tf-result-meta"></div><div id="tf-cards" class="tf-summary-grid"></div><div class="tf-chart-wrap"><svg id="tf-chart" class="tf-chart" viewBox="0 0 1100 430" role="img" aria-label="시간봉별 MACD 1부터 MACD 6까지 누적수익률"></svg></div><div class="tf-table-wrap"><table class="tf-table"><thead><tr><th>전략</th><th>최종 자산</th><th>수익률</th><th>MDD</th><th>비중 변경</th><th>현재 상태</th></tr></thead><tbody id="tf-table-body"></tbody></table></div><p class="tf-note">확정된 이전 봉의 MACD·RSI 상태를 다음 봉 시가에 적용합니다. 수수료 0.05%, 슬리피지 0.08%를 반영하며 펀딩비·유지증거금·거래소별 강제청산 규칙은 포함하지 않습니다. 진행 중인 최신 봉은 제외되며 결과는 투자 수익을 보장하지 않습니다.</p></div>
+    <div id="tf-output" hidden><div id="tf-meta" class="tf-result-meta"></div><div id="tf-cards" class="tf-summary-grid"></div><div class="tf-chart-wrap"><svg id="tf-chart" class="tf-chart" viewBox="0 0 1100 430" role="img" aria-label="시간봉별 MACD 1부터 MACD 5까지 누적수익률"></svg></div><div class="tf-table-wrap"><table class="tf-table"><thead><tr><th>전략</th><th>최종 자산</th><th>수익률</th><th>MDD</th><th>비중 변경</th><th>현재 상태</th></tr></thead><tbody id="tf-table-body"></tbody></table></div><p class="tf-note">확정된 이전 봉의 MACD·RSI 상태를 다음 봉 시가에 적용합니다. 수수료 0.05%, 슬리피지 0.08%를 반영하며 펀딩비·유지증거금·거래소별 강제청산 규칙은 포함하지 않습니다. 진행 중인 최신 봉은 제외되며 결과는 투자 수익을 보장하지 않습니다.</p></div>
   `;
   document.querySelector(".live-results")?.insertAdjacentElement("beforebegin", section);
 
@@ -80,10 +79,10 @@
         status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} 다운로드 ${loaded.toLocaleString()}/${count.toLocaleString()}봉`;
       });
       if (candles.length < 80) throw new Error(`MACD 계산에 필요한 봉이 부족합니다 (${candles.length}봉)`);
-      status.textContent = `MACD 1~6 전략을 계산하고 있습니다…`;
+      status.textContent = `MACD 1~5 전략을 계산하고 있습니다…`;
       const results = simulateAll(candles, market, initialEquity);
       renderResults(results, candles, market, timeframe);
-      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} MACD 1~6 시뮬레이션 완료`;
+      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} MACD 1~5 시뮬레이션 완료`;
     } catch (error) {
       status.classList.add("is-error");
       status.textContent = `시뮬레이션 실패: ${String(error?.message || error)}`;
@@ -151,7 +150,6 @@
       "MACD 3": planAllocation(macd18.line, macd18.signal, false, false),
       "MACD 4": planAllocation(macd18.line, macd18.signal, true, false),
       "MACD 5": planAllocation(macd18.line, macd18.signal, true, true),
-      "MACD 6": planAllocation(macd18.line, macd18.signal, true, 6),
     };
     return STRATEGIES.map((strategy) => simulate(candles, plans[strategy.id], strategy, market, initialEquity));
   }
@@ -209,7 +207,7 @@
       if (dead) firstGoldenActive = false;
       const belowDead = allowShort ? -1 : 0;
       const baseline = line[index] >= 0 ? (diff >= 0 ? 1 : 0.5) : (diff >= 0 ? 0.5 : belowDead);
-      plan[index] = firstGoldenLeverage === 6 ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?0:-2)) : firstGoldenLeverage ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?.5:-2)) : baseline;
+      plan[index] = firstGoldenLeverage ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?.5:-2)) : baseline;
       previousLine = line[index]; previousDiff = diff;
     }
     return plan;
@@ -277,7 +275,7 @@
     const paths = results.map((result) => `<path d="${result.curve.map((point, index) => `${index ? "L" : "M"}${x(point.timestamp).toFixed(1)},${y(point.return).toFixed(1)}`).join(" ")}" fill="none" stroke="${result.color}" stroke-width="2.4"${result.id === "MACD 3" ? ' stroke-dasharray="8 4"' : result.id === "MACD 4" ? ' stroke-dasharray="12 4"' : result.id === "MACD 5" ? ' stroke-dasharray="5 3"' : ""}><title>${result.id} ${formatPercent(result.totalReturn)}</title></path>`).join("");
     const legend = results.map((result, index) => `<g transform="translate(${left + index * 185},18)"><line x1="0" y1="0" x2="24" y2="0" stroke="${result.color}" stroke-width="4"/><text x="31" y="4" fill="#bdd0cb" font-size="12">${result.id} ${formatPercent(result.totalReturn)}</text></g>`).join("");
     const dates = [start, start + (end - start) / 2, end].map((timestamp) => `<text x="${x(timestamp)}" y="402" text-anchor="middle" fill="#829b94" font-size="11">${new Date(timestamp).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}</text>`).join("");
-    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${timeframeLabel} MACD 1~6 누적수익률</title>${legend}${grid}<line x1="${left}" y1="${y(0)}" x2="${right}" y2="${y(0)}" stroke="#55716a" stroke-dasharray="3 4"/>${paths}${dates}`;
+    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${timeframeLabel} MACD 1~5 누적수익률</title>${legend}${grid}<line x1="${left}" y1="${y(0)}" x2="${right}" y2="${y(0)}" stroke="#55716a" stroke-dasharray="3 4"/>${paths}${dates}`;
   }
 
   function exposureLabel(value) { return value === -2 ? "숏 2배" : value === 2 ? "롱 2배" : value === 1 ? "롱 100%" : value === 0.5 ? "롱 50%" : value === -1 ? "숏 100%" : "현금 100%"; }

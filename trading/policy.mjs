@@ -2,10 +2,10 @@ import {STRATEGIES} from './strategies.mjs';
 import Decimal from './vendor/decimal.mjs';
 export const D = Object.assign(x => new Decimal(x), {max:(...x)=>Decimal.max(...x),min:(...x)=>Decimal.min(...x)});
 export const DAY = 86400000;
-export const POLICY = Object.freeze({ version:'D5-80-v2.1.1', horizon:5, threshold:.8, splits:5, coefficients:[.2,.5,.8,1.1,1.4], minSamples:30 });
+export const POLICY = Object.freeze({ version:'D5-80-v2.2', horizon:5, threshold:.8, splits:5, coefficients:[.2,.5,.8,1.1,1.4], minSamples:30 });
 export const COINS = ['BTC','ETH','XRP','SOL','ADA','DOGE','AVAX','LINK','DOT','UNI','XLM','ONDO'];
 export function selection(exchange, coin, strategy) {
-  if (!['korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='korbit'?3:6)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 코빗은 현물 MACD 1~3입니다.');
+  if (!['korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='korbit'?3:5)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 코빗은 현물 MACD 1~3입니다.');
   return {exchange,coin,strategy,symbol:exchange==='korbit'?coin.toLowerCase()+'_krw':coin+'USDT',currency:exchange==='korbit'?'KRW':'USDT'};
 }
 export function positive(v,name) { const d=D(v); if (!d.isFinite() || !d.gt(0) || d.gt('1e15')) throw Error(name+'은 0보다 큰 금액이어야 합니다.'); return d; }

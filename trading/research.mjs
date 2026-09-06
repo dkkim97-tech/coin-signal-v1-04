@@ -18,6 +18,7 @@ export function nextState(prev,r,prior,n){
  return state;
 }
 export function prepare(candles,n,{latestOnly=false}={}){
+ if(!Number.isInteger(n)||n<1||n>5)throw Error('지원하지 않는 MACD 전략');
  const s=settings({fast:n>=3?18:12,slow:n>=3?39:26});const rows=indicators(candles,s),states=[];
  let state={target:0,armed:false,active:false,event:null};
  for(let i=0;i<rows.length;i++){
