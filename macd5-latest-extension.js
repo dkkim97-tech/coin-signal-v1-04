@@ -58,7 +58,7 @@
       const openingEquity = cash + quantity * candle.open;
       if (!(openingEquity > 0)) { liquidate(candle.timestamp, candle.open, "시가 갭으로 계좌 청산"); continue; }
       if (target !== exposure) {
-        const reason = target === 2 ? "0선 상향돌파 후 첫 골든크로스: 롱 2배" : target < 0 ? "기본 0선 아래·데드크로스: 숏 1배" : `롱 보유 비중 ${target === 0.5 ? "50%" : "1배"}로 변경`;
+        const reason = target === 2 ? "0선 위 골든: 롱 2배" : target < 0 ? "0선 아래 데드: 숏 2배" : `롱 보유 비중 ${target === 0.5 ? "50%" : "1배"}로 변경`;
         trades.push({ market: base.market, timestamp: candle.timestamp, entryTime: segmentStartTime, price: candle.open, pnl: openingEquity - segmentStartEquity, returnPct: segmentStartEquity ? openingEquity / segmentStartEquity - 1 : 0, reason, side: exposure < 0 ? "short" : "long", type: "allocation" });
         ({ cash, quantity } = rebalance(cash, quantity, target, candle.open));
         exposure = target; segmentStartEquity = cash + quantity * candle.open; segmentStartTime = candle.timestamp;
@@ -103,7 +103,7 @@
       if (goldenCross && line > 0 && firstGoldenArmed) { firstGoldenActive = true; firstGoldenArmed = false; }
       if (deadCross) firstGoldenActive = false;
       const baseline = line >= 0 ? (diff >= 0 ? 1 : 0.5) : (diff >= 0 ? 0.5 : -1);
-      plan[index] = mode === "firstGoldenAboveZero" && firstGoldenActive && line > 0 && diff > 0 ? leverage : baseline;
+      plan[index] = mode === "regime6" ? (line>=0?(diff>=0?2:1):(diff>=0?0:-2)) : (line>=0?(diff>=0?2:.5):(diff>=0?.5:-2));
       previousLine = line; previousDiff = diff;
     }
     return plan;

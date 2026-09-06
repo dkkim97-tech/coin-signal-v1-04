@@ -1,3 +1,4 @@
+import {regimeTarget} from './strategies.mjs';
 import {indicators,DAY,avg} from '../position/indicators.mjs';
 import {settings} from '../position/config.mjs';
 export const FEE=.0005,SLIP=.0008,COEFF=[.2,.5,.8,1.1,1.4];
@@ -10,8 +11,8 @@ export function nextState(prev,r,prior,n){
  else {
   if(zeroUp){state.armed=true;state.active=false;}if(zeroDown){state.armed=false;state.active=false;}
   if(golden&&r.line>0&&state.armed){state.active=true;state.armed=false;}if(dead)state.active=false;
-  state.target=r.line>=0?(r.histogram>=0?1:.5):(r.histogram>=0?.5:n>=4?-1:0);
-  if(n===5&&state.active&&r.line>0&&r.histogram>0)state.target=2;
+  state.target=regimeTarget(n,r.line,r.histogram);
+
  }
  state.event=state.target!==prev.target?`${zeroUp?'ZERO_UP':zeroDown?'ZERO_DOWN':golden?'GOLDEN':dead?'DEAD':'STATE'}:${state.target}`:null;
  return state;
@@ -40,7 +41,7 @@ export function prepare(candles,n,{latestOnly=false}={}){
   const cases=[];
   for(let i=s.slow+s.signal;i+5<=at;i++){
    if(rows[i+5].timestamp-rows[i].timestamp!==5*DAY||!projections[i]||projections[i].key!==projection.key||states[i].target!==states[at].target)continue;
-   if(n===5&&(states[i].armed!==states[at].armed||states[i].active!==states[at].active))continue;
+
    const distance=Math.sqrt(features[i].reduce((a,f,j)=>a+(f-features[at][j])**2,0));if(distance>1.5)continue;
    const hit=states.slice(i+1,i+6).some(x=>x.event===projection.key);cases.push({i,distance,hit});
   }

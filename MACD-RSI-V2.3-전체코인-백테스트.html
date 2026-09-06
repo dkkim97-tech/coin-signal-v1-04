@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>마이웨이 75 · 코인 시그널 앱 V2.0</title>
+  <title>마이웨이 75 · 코인 시그널 앱 V2.1</title>
   <style>:root { color-scheme: dark; --bg:#090c0c; --panel:#111716; --line:#26302e; --text:#eff7f4; --muted:#91a19d; --mint:#72f2bd; --amber:#f2c572; --danger:#ff776f; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,"Pretendard","Noto Sans KR",system-ui,sans-serif; background:radial-gradient(circle at 75% 0,#143126 0,transparent 33%),var(--bg); color:var(--text); }
@@ -65,12 +65,12 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
 @media(max-width:900px){.strategy-grid{grid-template-columns:1fr}.period-result{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.strategy-form{grid-template-columns:1fr}.strategy-form .wide{grid-column:auto}.period-result{grid-template-columns:1fr}}
 </style>
 <style>.summary-table-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-top:24px}.summary-table-heading .table-title{margin:0}.summary-table-heading p{margin:5px 0 0;color:var(--muted);font-size:12px}.summary-table-heading label{display:grid;gap:6px;color:var(--muted);font-size:12px}.summary-table-heading select{min-width:150px;background:#090d0c;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px}.summary-selectable-row{cursor:pointer;transition:background .15s}.summary-selectable-row:hover{background:#14221e}.summary-selectable-row.is-selected{background:#173126;box-shadow:inset 4px 0 var(--mint)}.summary-selectable-row:focus{outline:2px solid var(--mint);outline-offset:-2px}@media(max-width:620px){.summary-table-heading{align-items:stretch;flex-direction:column}.summary-table-heading select{width:100%}}</style>
-</head>
+<style>.bar-macd6{fill:#e8d66b}.macd6-color{background:#e8d66b}</style></head>
 <body>
   <header>
     <div>
-      <p class="eyebrow">LOCAL STRATEGY LAB · APP V2.0</p>
-      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V2.0</span></h1>
+      <p class="eyebrow">LOCAL STRATEGY LAB · APP V2.1</p>
+      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V2.1</span></h1>
       <p class="subtitle">MACD 1: RSI&gt;30·0선 돌파 · MACD 2: MACD(12,26,9) · MACD 3: MACD(18,39,9) 상태별 100%·50%·50%·0% 보유</p>
     </div>
     <div class="header-actions">
@@ -75615,16 +75615,16 @@ function drawComparisonChart(svg, rows, metric) {
     const groupLength = groupStart ? rows.slice(index).findIndex((item) => item.market !== row.market) : 0;
     const normalizedGroupLength = groupStart ? (groupLength === -1 ? rows.length - index : groupLength) : 0;
     const groupBand = groupStart ? `<rect class="coin-group-band${groupIndex % 2 ? " is-alt" : ""}" x="6" y="${y - 8}" width="748" height="${normalizedGroupLength * rowGap - 2}" rx="8"><title>${row.market.replace("KRW-", "")} · MACD 전략 비교 그룹</title></rect>` : "";
-    const strategyCss = row.strategy?.startsWith("MACD 5") ? "bar-macd5" : row.strategy?.startsWith("MACD 4") ? "bar-macd4" : row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
+    const strategyCss = row.strategy?.startsWith("MACD 6") ? "bar-macd6" : row.strategy?.startsWith("MACD 5") ? "bar-macd5" : row.strategy?.startsWith("MACD 4") ? "bar-macd4" : row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
     const css = isReturn ? `${value >= 0 ? "bar-positive" : "bar-negative"} ${strategyCss}` : strategyCss;
     const textX = isReturn ? 748 : valueX + 7;
     const anchor = isReturn ? "end" : "start";
     const marketLabel = row.market.replace("KRW-", "");
-    const strategyLabel = row.strategy?.startsWith("MACD 1") ? "MACD 1" : row.strategy?.startsWith("MACD 2") ? "MACD 2" : row.strategy?.startsWith("MACD 3") ? "MACD 3" : row.strategy?.startsWith("MACD 4") ? "MACD 4" : row.strategy?.startsWith("MACD 5") ? "MACD 5" : row.strategy || "";
+    const strategyLabel = row.strategy?.startsWith("MACD 6") ? "MACD 6" : row.strategy?.startsWith("MACD 1") ? "MACD 1" : row.strategy?.startsWith("MACD 2") ? "MACD 2" : row.strategy?.startsWith("MACD 3") ? "MACD 3" : row.strategy?.startsWith("MACD 4") ? "MACD 4" : row.strategy?.startsWith("MACD 5") ? "MACD 5" : row.strategy || "";
     const rowLabel = useMarketOnlyLabel
       ? `<tspan class="coin-id">${marketLabel}</tspan>`
       : `<tspan class="coin-id">${marketLabel}</tspan><tspan class="strategy-id">｜${strategyLabel}</tspan>`;
-    const fullDescription = strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : strategyLabel === "MACD 4" ? "MACD 4 · MACD(18,39,9) 선물 롱/숏 보유 비중" : strategyLabel === "MACD 5" ? "MACD 5 · 0선 상향돌파 후 첫 골든크로스 롱 2배" : row.strategy;
+    const fullDescription = strategyLabel === "MACD 6" ? "MACD 6 · 롱 2배/100%/미보유/숏 2배" : strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : strategyLabel === "MACD 4" ? "MACD 4 · MACD(18,39,9) 선물 롱/숏 보유 비중" : strategyLabel === "MACD 5" ? "MACD 5 · 0선 위 골든 롱 2배·아래 데드 숏 2배" : row.strategy;
     const liquidationText = row.tradingHalted ? " · 청산" : "";
     return `${groupBand}<text class="chart-label" x="178" y="${y + 15}" text-anchor="end" aria-label="${marketLabel} · ${fullDescription}${liquidationText}">${rowLabel}</text><rect class="${css}" x="${barX}" y="${y}" width="${width}" height="20" rx="3"><title>${marketLabel} · ${fullDescription}: ${percent(isReturn ? value : -value)}${liquidationText}</title></rect><text class="chart-value" x="${textX}" y="${y + 15}" text-anchor="${anchor}">${percent(isReturn ? value : -value)}${liquidationText}</text>`;
   }).join("");
@@ -75698,6 +75698,6 @@ function nearestPoint(points, timestamp) {
   <script src="investment-mode-switch.js?v=1.4"></script>
   <script src="futures-timeframe-simulator.js?v=1.1"></script>
 
-<script type="module" src="/trading/dashboard.mjs?v=2.0"></script>
+<script type="module" src="/trading/dashboard.mjs?v=2.1"></script>
 </body>
 </html>

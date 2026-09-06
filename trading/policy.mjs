@@ -1,10 +1,11 @@
+import {STRATEGIES} from './strategies.mjs';
 import Decimal from './vendor/decimal.mjs';
 export const D = Object.assign(x => new Decimal(x), {max:(...x)=>Decimal.max(...x),min:(...x)=>Decimal.min(...x)});
 export const DAY = 86400000;
-export const POLICY = Object.freeze({ version:'D5-80-v2', horizon:5, threshold:.8, splits:5, coefficients:[.2,.5,.8,1.1,1.4], minSamples:30 });
+export const POLICY = Object.freeze({ version:'D5-80-v2.1', horizon:5, threshold:.8, splits:5, coefficients:[.2,.5,.8,1.1,1.4], minSamples:30 });
 export const COINS = ['BTC','ETH','XRP','SOL','ADA','DOGE','AVAX','LINK','DOT','UNI','XLM','ONDO'];
 export function selection(exchange, coin, strategy) {
-  if (!['korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='korbit'?3:5)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 코빗은 현물 MACD 1~3입니다.');
+  if (!['korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='korbit'?3:6)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 코빗은 현물 MACD 1~3입니다.');
   return {exchange,coin,strategy,symbol:exchange==='korbit'?coin.toLowerCase()+'_krw':coin+'USDT',currency:exchange==='korbit'?'KRW':'USDT'};
 }
 export function positive(v,name) { const d=D(v); if (!d.isFinite() || !d.gt(0) || d.gt('1e15')) throw Error(name+'은 0보다 큰 금액이어야 합니다.'); return d; }
@@ -49,8 +50,8 @@ export function makePlan({exchange,coin,strategy,limits,snapshot,meta,decision,n
   if(now-snapshot.at>15000 || snapshot.at>now+1000) throw Error('계좌 조회가 오래되었습니다. 다시 조회하세요.');
   const price=positive(snapshot.price,'현재가'),current=D(snapshot.positions.find(p=>p.coin===coin)?.qty||0),used=usage(snapshot);
   if(exchange==='korbit'&&(decision.target<0||decision.target>1||current.lt(0))) throw Error('현물에서는 숏·레버리지 주문을 허용하지 않습니다.');
-  if(![0,.4,.5,1,-1,2].includes(decision.target)) throw Error('목표 비중 오류');
-  const budget=Decimal.min(positive(snapshot.equity,'계좌 평가액'),cap.div(strategy===5?2:1));
+  if(decision.target!==0&&!STRATEGIES[strategy].targets.includes(decision.target)) throw Error('목표 비중 오류');
+  const budget=Decimal.min(positive(snapshot.equity,'계좌 평가액'),cap.div(STRATEGIES[strategy].maxExposure));
   // A target is based on capped capital. Passive price gains do not expand the strategy budget.
   const desired=budget.mul(String(decision.target)).div(price);
   let delta=desired.sub(current),reduceOnly=false,phase='OPEN';

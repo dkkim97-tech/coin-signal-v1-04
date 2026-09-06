@@ -97,9 +97,42 @@ test('private API has no live path when unconfigured and rejects cross-origin ca
     r=res();await handler({method:'POST',headers:{origin:'https://evil.example','x-trading-ui':'1'},body:{action:'login'}},r);assert.equal(r.code,403);assert.match(r.headers['Cache-Control'],/no-store/);
   } finally {for(const k of keys)saved[k]===undefined?delete process.env[k]:process.env[k]=saved[k];}
 });
-test('MACD 5 first golden-cross state preserved; closed data is mandatory',()=>{
+test('MACD 5 above-zero golden is 2x; closed data is mandatory',()=>{
   const a={target:.5,armed:true,active:false};const b=nextState(a,{line:1,signal:.5,histogram:.5,rsi:50},{line:1,histogram:-.1},5);assert.equal(b.target,2);
   assert.throws(()=>decide([],5),/400/);
+});
+
+test('MACD 5/6 use all four regimes regardless of first-cross history',()=>{
+  for(const n of [5,6])for(const armed of [true,false])for(const active of [true,false]){
+    const targets=n===5?[2,.5,.5,-2]:[2,1,0,-2];
+    [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([line,histogram],i)=>{
+      const r={line,histogram,signal:line-histogram,rsi:50};
+      assert.equal(nextState({target:0,armed,active},r,r,n).target,targets[i]);
+    });
+  }
+  assert.equal(selection('bitget','BTC',6).strategy,6);
+  for(const n of [4,5,6])assert.throws(()=>selection('korbit','BTC',n));
+  assert.throws(()=>selection('bitget','BTC',7));
+});
+
+test('MACD 5/6 short 2x obeys both gross caps and closes long before reversal',()=>{
+  for(const strategy of [5,6]){
+    const config={...input(),strategy,decision:{kind:'CONFIRMED',target:-2}};
+    const p=makePlan(config);assert.equal(p.budget,'2500');assert.equal(p.targetQty,'-50');
+    assert.equal(p.orders.length,5);assert.ok(p.orders.every(o=>o.side==='sell'&&!o.reduceOnly));
+    assert.ok(p.orders.reduce((s,o)=>s.add(D(o.qty).mul(o.price).mul('1.005')),D(0)).lte(5000));
+    const s=snapshot();s.positions=[{coin:'BTC',qty:'10',price:'100'}];
+    const exit=makePlan({...config,snapshot:s});assert.equal(exit.phase,'CLOSE_BEFORE_REVERSE');assert.ok(exit.orders.every(o=>o.reduceOnly&&o.side==='sell'));
+    s.positions=[{coin:'ETH',qty:'100',price:'100'}];assert.equal(makePlan({...config,snapshot:s}).orders.length,0);
+  }
+});
+
+test('MACD 6 below golden flattens shorts and above dead targets 100% of capped capital',()=>{
+  const s=snapshot();s.positions=[{coin:'BTC',qty:'-10',price:'100'}];
+  const flat=makePlan({...input(),strategy:6,snapshot:s,decision:{kind:'CONFIRMED',target:0}});
+  assert.equal(flat.targetQty,'0');assert.ok(flat.orders.every(o=>o.reduceOnly&&o.side==='buy'));
+  const long=makePlan({...input(),strategy:6,decision:{kind:'CONFIRMED',target:1}});assert.equal(long.targetQty,'25');
+  assert.throws(()=>makePlan({...input(),strategy:6,decision:{target:.5}}),/목표/);
 });
 test('D5 predictions use matured history only and optimized latest matches full research',()=>{
   const candles=Array.from({length:450},(_,i)=>{const close=100+Math.sin(i/9)*8+i*.01;return {timestamp:now-(450-i)*DAY,open:close,high:close+2,low:close-2,close,volume:10};});
