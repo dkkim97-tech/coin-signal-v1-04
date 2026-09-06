@@ -7,7 +7,7 @@ for (const file of files) { const r = spawnSync(process.execPath, ['--check', ne
 const data = JSON.parse(await readFile(new URL('../position/data/btc-history.json', import.meta.url)));
 const started = Date.now();
 const results = research(data.candles.d1, settings(), {}, message => console.log(message));
-const directory = new URL('../../../outputs/', import.meta.url); await mkdir(directory, { recursive: true });
+const directory = new URL('../reports/', import.meta.url); await mkdir(directory, { recursive: true });
 await writeFile(new URL('btc-position-research.json', directory), JSON.stringify(results));
 const summary = {
   elapsedSeconds: (Date.now() - started) / 1000,
