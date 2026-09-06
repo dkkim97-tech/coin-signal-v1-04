@@ -9,7 +9,7 @@ const esc=x=>String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 const fmt=(v,n=2)=>Number.isFinite(Number(v))?Number(v).toLocaleString('ko-KR',{maximumFractionDigits:n}):'—';
 const percent=v=>v==null?'—':(v*100).toFixed(1)+'%';
 const table=(headers,rows)=>`<div class="tc-scroll"><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-root.innerHTML=`<div class="tc-kicker">COIN SIGNAL · V2.2</div><h2>${name} · D−5 / 80%</h2><p class="tc-sub">과거 유사 사례 30개 이상 · 확률 80% 이상 · 가격 등간격 5분할 · 전체 + 종목별 한도</p>
+root.innerHTML=`<div class="tc-kicker">COIN SIGNAL · V2.01</div><h2>${name} · D−5 / 80%</h2><p class="tc-sub">과거 유사 사례 30개 이상 · 확률 80% 이상 · 가격 등간격 5분할 · 전체 + 종목별 한도</p>
 <div class="tc-grid"><div class="tc-card"><small>거래소 / 통화</small><strong>${futures?'Bitget / USDT':'Korbit / KRW'}</strong></div><div class="tc-card"><small>현재가</small><strong id="tc-price">—</strong></div><div class="tc-card"><small>5일 내 신호 확률</small><strong id="tc-prob">계산 대기</strong></div><div class="tc-card"><small>실행 상태</small><strong id="tc-mode">미연결</strong></div></div>
 <div class="tc-row"><label>종목<select id="tc-coin">${COINS.map(c=>`<option>${c}</option>`).join('')}</select></label><label>전략<select id="tc-strategy">${Array.from({length:futures?5:3},(_,i)=>`<option value="${i+1}">MACD ${i+1}</option>`).join('')}</select></label><button id="tc-load" class="tc-primary">거래소 시세·신호 조회</button></div>
 <p class="tc-sub">${futures?'단방향·격리, 거래소 레버리지 2배 설정을 확인합니다. MACD 5는 위 골든 롱 200%·위 데드 롱 50%·아래 골든 롱 50%·아래 데드 숏 200%입니다.':'현물 MACD 1~3을 지원합니다. 매도는 보유 수량 이내이며, 숏·차입 주문은 만들지 않습니다.'}</p>
