@@ -4,7 +4,7 @@ import {COINS} from '../trading/policy.mjs';
 const root=new URL('../',import.meta.url),read=p=>readFile(new URL(p,root),'utf8');
 function embedded(t){const marker=/window\.__COIN_DATA__\s*=\s*/g,m=marker.exec(t);if(!m)throw Error('Missing embedded data');const start=m.index+m[0].length;let depth=0,q=false,esc=false;for(let i=start;i<t.length;i++){const c=t[i];if(q){if(esc)esc=false;else if(c==='\\')esc=true;else if(c==='"')q=false;}else if(c==='"')q=true;else if(c==='{')depth++;else if(c==='}'&&--depth===0)return JSON.parse(t.slice(start,i+1));}throw Error('Incomplete data');}
 const comparison=JSON.parse(await read('trading/comparison.json')).filter(r=>r.n<5);
-const extras=[5,6].map(n=>({strategy:n===5?'MACD 5 · 롱/숏 2배':'MACD 6 · 롱 2배/100%/미보유/숏 2배',assumptions:{fastPeriod:18,slowPeriod:39,signalPeriod:9,feeRate:.0005,slippage:.0008,leverage:2,leverageMode:'regime'+n},summaries:[],series:[]}));
+const extras=[5,6].map(n=>({strategy:n===5?'MACD 5 · 롱/숏 2배':'MACD 6 · 롱 2배/50%/미보유/숏 2배',assumptions:{fastPeriod:18,slowPeriod:39,signalPeriod:9,feeRate:.0005,slippage:.0008,leverage:2,leverageMode:'regime'+n},summaries:[],series:[]}));
 for(const coin of COINS){
  const data=embedded(await read(`${coin}-MACD-RSI-V2.3-ALL.html`)),candles=data.candles.d1.map(([timestamp,open,high,low,close,volume])=>({timestamp,open,high,low,close,volume}));
  for(const n of [5,6]){

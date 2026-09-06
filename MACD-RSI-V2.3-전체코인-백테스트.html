@@ -75624,7 +75624,7 @@ function drawComparisonChart(svg, rows, metric) {
     const rowLabel = useMarketOnlyLabel
       ? `<tspan class="coin-id">${marketLabel}</tspan>`
       : `<tspan class="coin-id">${marketLabel}</tspan><tspan class="strategy-id">｜${strategyLabel}</tspan>`;
-    const fullDescription = strategyLabel === "MACD 6" ? "MACD 6 · 롱 2배/100%/미보유/숏 2배" : strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : strategyLabel === "MACD 4" ? "MACD 4 · MACD(18,39,9) 선물 롱/숏 보유 비중" : strategyLabel === "MACD 5" ? "MACD 5 · 0선 위 골든 롱 2배·아래 데드 숏 2배" : row.strategy;
+    const fullDescription = strategyLabel === "MACD 6" ? "MACD 6 · 롱 2배/50%/미보유/숏 2배" : strategyLabel === "MACD 1" ? "MACD 1 · 0선 돌파" : strategyLabel === "MACD 2" ? "MACD 2 · MACD(12,26,9) 상태별 보유 비중" : strategyLabel === "MACD 3" ? "MACD 3 · MACD(18,39,9) 상태별 보유 비중" : strategyLabel === "MACD 4" ? "MACD 4 · MACD(18,39,9) 선물 롱/숏 보유 비중" : strategyLabel === "MACD 5" ? "MACD 5 · 0선 위 골든 롱 2배·아래 데드 숏 2배" : row.strategy;
     const liquidationText = row.tradingHalted ? " · 청산" : "";
     return `${groupBand}<text class="chart-label" x="178" y="${y + 15}" text-anchor="end" aria-label="${marketLabel} · ${fullDescription}${liquidationText}">${rowLabel}</text><rect class="${css}" x="${barX}" y="${y}" width="${width}" height="20" rx="3"><title>${marketLabel} · ${fullDescription}: ${percent(isReturn ? value : -value)}${liquidationText}</title></rect><text class="chart-value" x="${textX}" y="${y + 15}" text-anchor="${anchor}">${percent(isReturn ? value : -value)}${liquidationText}</text>`;
   }).join("");

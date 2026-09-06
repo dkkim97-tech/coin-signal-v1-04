@@ -103,7 +103,7 @@
       if (goldenCross && line > 0 && firstGoldenArmed) { firstGoldenActive = true; firstGoldenArmed = false; }
       if (deadCross) firstGoldenActive = false;
       const baseline = line >= 0 ? (diff >= 0 ? 1 : 0.5) : (diff >= 0 ? 0.5 : -1);
-      plan[index] = mode === "regime6" ? (line>=0?(diff>=0?2:1):(diff>=0?0:-2)) : (line>=0?(diff>=0?2:.5):(diff>=0?.5:-2));
+      plan[index] = mode === "regime6" ? (line>=0?(diff>=0?2:.5):(diff>=0?0:-2)) : (line>=0?(diff>=0?2:.5):(diff>=0?.5:-2));
       previousLine = line; previousDiff = diff;
     }
     return plan;

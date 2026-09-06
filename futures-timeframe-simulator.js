@@ -12,7 +12,7 @@
     { id: "MACD 4", name: "MACD(18,39,9) 롱·숏", color: "#4ca6ff" },
     { id: "MACD 5", name: "롱·숏 2배", color: "#ff5fb7" },
   ];
-  STRATEGIES.push({id:"MACD 6",name:"롱 2배·100%·미보유·숏 2배",color:"#e8d66b"});
+  STRATEGIES.push({id:"MACD 6",name:"롱 2배·50%·미보유·숏 2배",color:"#e8d66b"});
   const TIMEFRAMES = {
     day: { label: "일봉", endpoint: "days", milliseconds: 86400000 },
     240: { label: "4시간봉", endpoint: "minutes/240", milliseconds: 14400000 },
@@ -209,7 +209,7 @@
       if (dead) firstGoldenActive = false;
       const belowDead = allowShort ? -1 : 0;
       const baseline = line[index] >= 0 ? (diff >= 0 ? 1 : 0.5) : (diff >= 0 ? 0.5 : belowDead);
-      plan[index] = firstGoldenLeverage === 6 ? (line[index]>=0?(diff>=0?2:1):(diff>=0?0:-2)) : firstGoldenLeverage ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?.5:-2)) : baseline;
+      plan[index] = firstGoldenLeverage === 6 ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?0:-2)) : firstGoldenLeverage ? (line[index]>=0?(diff>=0?2:.5):(diff>=0?.5:-2)) : baseline;
       previousLine = line[index]; previousDiff = diff;
     }
     return plan;

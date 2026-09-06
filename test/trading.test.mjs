@@ -104,7 +104,7 @@ test('MACD 5 above-zero golden is 2x; closed data is mandatory',()=>{
 
 test('MACD 5/6 use all four regimes regardless of first-cross history',()=>{
   for(const n of [5,6])for(const armed of [true,false])for(const active of [true,false]){
-    const targets=n===5?[2,.5,.5,-2]:[2,1,0,-2];
+    const targets=n===5?[2,.5,.5,-2]:[2,.5,0,-2];
     [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([line,histogram],i)=>{
       const r={line,histogram,signal:line-histogram,rsi:50};
       assert.equal(nextState({target:0,armed,active},r,r,n).target,targets[i]);
@@ -127,12 +127,12 @@ test('MACD 5/6 short 2x obeys both gross caps and closes long before reversal',(
   }
 });
 
-test('MACD 6 below golden flattens shorts and above dead targets 100% of capped capital',()=>{
+test('MACD 6 below golden flattens shorts and above dead targets 50% of capped capital',()=>{
   const s=snapshot();s.positions=[{coin:'BTC',qty:'-10',price:'100'}];
   const flat=makePlan({...input(),strategy:6,snapshot:s,decision:{kind:'CONFIRMED',target:0}});
   assert.equal(flat.targetQty,'0');assert.ok(flat.orders.every(o=>o.reduceOnly&&o.side==='buy'));
-  const long=makePlan({...input(),strategy:6,decision:{kind:'CONFIRMED',target:1}});assert.equal(long.targetQty,'25');
-  assert.throws(()=>makePlan({...input(),strategy:6,decision:{target:.5}}),/목표/);
+  const long=makePlan({...input(),strategy:6,decision:{kind:'CONFIRMED',target:.5}});assert.equal(long.targetQty,'12.5');
+  assert.throws(()=>makePlan({...input(),strategy:6,decision:{target:1}}),/목표/);
 });
 test('D5 predictions use matured history only and optimized latest matches full research',()=>{
   const candles=Array.from({length:450},(_,i)=>{const close=100+Math.sin(i/9)*8+i*.01;return {timestamp:now-(450-i)*DAY,open:close,high:close+2,low:close-2,close,volume:10};});
