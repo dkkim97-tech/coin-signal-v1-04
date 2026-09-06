@@ -17,7 +17,9 @@ function initialize() {
   const storageKey = `btc-position-v1:${isFutures ? 'futures' : 'spot'}`;
   const read = suffix => { try { return JSON.parse(localStorage.getItem(`${storageKey}:${suffix}`) || 'null'); } catch { return null; } };
   const save = (suffix, data) => localStorage.setItem(`${storageKey}:${suffix}`, JSON.stringify(data));
-  let s; try { s = settings(read('settings') || {}); } catch { s = settings(); }
+  const storedSettings = read('settings') || {};
+  let s; try { s = settings({ ...storedSettings, spacingMode:'equal', executionPolicy:'complete-on-confirmation', ...(storedSettings.executionPolicy !== 'complete-on-confirmation' ? {riskModel:null} : {}) }); } catch { s = settings(); }
+  save('settings', s);
   let data = {}, candles = [], rows = [], mode = 'SIMULATION', current = 0, paper = null, worker = null, result = null, context = null, lastRefresh = 0, busy = false;
   let signal, detection, quote = null, quoteTime = null;
   const fmt = (v, digits = 0) => Number.isFinite(v) ? v.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
@@ -31,7 +33,7 @@ function initialize() {
   const input = (key, label, value, step = 'any') => `<label>${esc(label)}<input name="${key}" type="number" step="${step}" value="${value}" required></label>`;
   root.innerHTML = `<div class="pl-header"><div><span class="pl-kicker">BITCOIN · POSITION MANAGEMENT</span><h2>확률을 확인하고, 다섯 번에 나눠서.</h2><p>MACD 목표 비중 · 3-Day Leading Signal · ADR5 실행</p></div><div class="pl-controls"><label>운용 모드<select id="pl-mode"><option>SIMULATION</option><option>PAPER</option><option>BACKTEST</option><option disabled>LIVE · 실주문 미연결</option></select></label><button id="pl-refresh" type="button">최신 데이터 갱신</button><button id="pl-stop" class="pl-danger" type="button">Paper 긴급 정지</button></div></div>
     <p id="pl-status" class="pl-status" role="status">BTC 확정 일봉을 불러오는 중입니다.</p>
-    <div id="pl-metrics" class="pl-metrics"></div><div class="pl-controls"><label>시뮬레이션 현재 BTC 비중 (%)<input id="pl-current" type="number" min="0" max="100" step="1" value="0"></label><button id="pl-paper-init" type="button">이 비중으로 Paper 계좌 초기화</button><span id="pl-account-note" class="pl-note">BTC + Cash · 기존 MACD 1~5 비교는 아래에서 계속 이용할 수 있습니다.</span></div>
+    <div id="pl-metrics" class="pl-metrics"></div><div class="pl-controls"><label>시뮬레이션 현재 BTC 비중 (%)<input id="pl-current" type="number" min="0" max="100" step="1" value="0"></label><button id="pl-paper-init" type="button">이 비중으로 Paper 계좌 초기화</button><button id="pl-paper-resume" type="button">Paper 잔고 유지·새 정책 재개</button><span id="pl-account-note" class="pl-note">BTC + Cash · 기존 MACD 1~5 비교는 아래에서 계속 이용할 수 있습니다.</span></div>
     <div class="pl-grid" style="margin-top:16px"><article class="pl-card"><h3>3-Day Leading Signal</h3><div id="pl-leading"></div></article><article class="pl-card"><h3>ADR5 · Core 3 + Opportunity 2</h3><div id="pl-orders"></div></article></div>
     <details><summary>판단 근거 · 시나리오 7개 · 주문 이력</summary><div id="pl-explain"></div><div id="pl-scenarios"></div><div id="pl-history"></div></details>
     <details><summary>Pattern + Envelope · 고점 / 저점 · 다중 시간봉</summary><div class="pl-grid"><div id="pl-pattern"></div><div id="pl-envelope"></div></div><div class="pl-controls"><label>유사 패턴 시간봉<select id="pl-pattern-frame"><option value="d1">1D</option><option value="w1">1W</option><option value="h4">4H</option><option value="h1">1H</option></select></label><button id="pl-pattern-run" type="button">유사 패턴 분석</button><button id="pl-frames" type="button">1W · 1D · 4H · 1H 확인</button></div><div id="pl-analog"></div><div id="pl-timeframes"></div></details>
@@ -40,11 +42,11 @@ function initialize() {
     ${input('fast', 'EMA Fast', s.fast, '1')}${input('slow', 'EMA Slow', s.slow, '1')}${input('signal', 'Signal EMA', s.signal, '1')}${input('threshold', 'Pre-Signal 기준 (%)', s.threshold * 100)}
     ${Object.keys(LEGACY_TARGETS).map(k => input(`target_${k}`, name(k) + ' 목표 (%)', s.targets[k] * 100)).join('')}
     ${input('minSamples', '최소 유사 사례 수', s.minSamples, '1')}${input('maxSamples', '최대 유사 사례 수', s.maxSamples, '1')}${input('similarityRadius', '유사 상태 거리 상한', s.similarityRadius)}${input('capital', '초기 자산 (KRW)', s.capital)}
-    <label class="pl-full">ADR5 주문 계수 · 쉼표로 5개<input name="coefficients" value="${s.coefficients.join(', ')}" required></label>
+    <label class="pl-full">ADR5 계수 5개 · 첫값~끝값 사이를 같은 가격 간격으로 자동 배치<input name="coefficients" value="${s.coefficients.join(', ')}" required></label>
     ${input('fee', '수수료 (%)', s.fee * 100)}${input('slippage', '슬리피지 (%)', s.slippage * 100)}${input('envelopePeriod', 'Envelope MA 기간', s.envelopePeriod, '1')}<label>평균선 종류<select name="envelopeMA"><option ${s.envelopeMA === 'SMA' ? 'selected' : ''}>SMA</option><option ${s.envelopeMA === 'EMA' ? 'selected' : ''}>EMA</option></select></label>
     <label>Envelope 밴드 (%)<input name="envelopeBands" value="${s.envelopeBands.join(', ')}" required></label><label>패턴 Window<select name="similarityWindow">${[30, 60, 90, 180].map(n => `<option ${s.similarityWindow === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
     ${input('maxPosition', '최대 BTC 비중 (%)', s.maxPosition * 100)}${input('maxTrade', '1개 주문 최대 비중 (%)', s.maxTrade * 100)}${input('maxDailyLoss', 'Paper 최대 일일 손실 (%)', s.maxDailyLoss * 100)}${input('maxVolatility', '비정상 시가 변동 정지 (%)', s.maxVolatility * 100)}
-    ${Object.entries(s.timeframeWeights).map(([f, w]) => input(`weight_${f}`, f.toUpperCase() + ' 참고 가중치', w)).join('')}</div><label class="pl-check"><input type="checkbox" name="cancelUnfilled" ${s.cancelUnfilled ? 'checked' : ''}>확률 기준 미달 시 Pre-Signal 미체결 취소</label><p class="pl-note">모든 미체결 주문은 다음 날 재계산됩니다. 1.00 ADR은 Opportunity 경계값으로 비교 Set B에 포함됩니다.</p><button class="pl-primary" type="submit">설정 저장 · 다시 계산</button> <output id="pl-settings-status" role="status"></output></form></details>
+    ${Object.entries(s.timeframeWeights).map(([f, w]) => input(`weight_${f}`, f.toUpperCase() + ' 참고 가중치', w)).join('')}</div><label class="pl-check"><input type="checkbox" name="cancelUnfilled" checked disabled>확률 기준 미달 시 Pre-Signal 미체결 취소</label><p class="pl-note">선행 주문 잔량만 다음 날 재배치합니다. 첫 예상일을 매일 뒤로 미루지 않습니다. 확률·표본 기준 이탈 시 미체결을 취소하고, 실제 교차 확정 시 다음 시가에 목표 잔량을 완료합니다. 완료 후 가격 변동만으로 재주문하지 않습니다.</p><button class="pl-primary" type="submit">설정 저장 · 다시 계산</button> <output id="pl-settings-status" role="status"></output></form></details>
     <details id="pl-backtest"><summary>Backtest Lab · 8개 전략 / 선행 일수 / 기준 확률 / 주문 계수</summary><p>Training: 데이터 시작~2020 · Validation: 2021~2023 · Out-of-Sample: 2024~현재</p><div class="pl-controls"><label>비교 시작일<input id="pl-start" type="date" value="2024-01-01"></label><label>비교 종료일<input id="pl-end" type="date" value="${date(Date.now())}"></label><button id="pl-research" class="pl-primary" type="button">전체 비교 실행</button><button id="pl-cancel" type="button" disabled>계산 중단</button><button id="pl-download" type="button" disabled>결과 JSON 저장</button><button id="pl-model" type="button" disabled>검증 모델을 시뮬레이션에 적용</button></div><p id="pl-research-status" role="status">현재 기본 확률 80%는 비교 결과로 자동 변경되지 않습니다.</p><div id="pl-research-output"></div></details>`;
   function status(message, error = false) { $('#pl-status').textContent = message; $('#pl-status').classList.toggle('pl-error', error); }
   function persistPaper() { if (paper) save('paper', paper); }
@@ -65,7 +67,7 @@ function initialize() {
     const list = mode === 'PAPER' && paper ? paper.orders.filter(o => o.status === 'WAITING') : plan({ timestamp: rows.at(-1).timestamp + DAY, price: p, adr: signal.row.adr, current: actual, target: signal.target, capital, source: signal.source, key: signal.key }, s);
     $('#pl-metrics').innerHTML = metric('BTC · KRW', fmt(p), quoteTime && Date.now() - quoteTime < 180000 ? '현재가 · Upbit' : `마지막 확정 종가 · ${date(rows.at(-1).timestamp)}`) + metric('Market Zone', detection.zone, detection.regime) + metric('Current Position', pct(actual), `Cash ${pct(1 - actual)} · ${mode}`) + metric('Target / Delta', `${pct(signal.target)} / ${delta >= 0 ? '+' : ''}${pct(delta)}`, name(signal.key)) + metric('MACD State', signal.row.histogram >= 0 ? 'Golden' : 'Dead', `${signal.row.line >= 0 ? '0선 위' : '0선 아래'} · ${s.fast}/${s.slow}/${s.signal}`) + metric('Historical Probability', pct(statistics.probability), `${statistics.success}/${statistics.sample} · ${statistics.confidence}`) + metric('Signal ETA', projected ? `${projected.eta.toFixed(2)} Days` : '—', '현재 가격 유지 조건부 계산') + metric('ADR5', `₩${fmt(signal.row.adr)}`, `${pct(signal.row.adr / p)} · 완료 일봉 5개`);
     $('#pl-leading').innerHTML = `<span class="pl-badge">${esc(signal.state)}</span><p>${esc(name(projected?.key))}</p><div class="pl-probability">${pct(statistics.probability)}</div><p class="pl-note">과거 성공 ${statistics.success} / 유사 사례 ${statistics.sample} · 최소 ${s.minSamples}<br>95% Wilson 신뢰구간 ${pct(statistics.interval[0])} ~ ${pct(statistics.interval[1])}<br>기준 ${pct(s.threshold)} · ${esc(statistics.confidence)}</p><div class="pl-timeline"><div>TODAY<b>${signal.row.cross ? esc(signal.row.cross) : 'No Cross'}</b>확정 일봉</div>${signal.projection.days.map((d, i) => `<div>D+${d.day}<b>${esc(d.cross || 'No Cross')}</b>${pct(statistics.timeline[i])} 이내 발생</div>`).join('')}</div><p class="pl-note">교차 예상과 과거 발생 비율은 별개입니다. 두 조건과 최소 표본 조건을 충족해야 선행 주문을 시작합니다.</p>`;
-    $('#pl-orders').innerHTML = `<p>Delta <b>${delta >= 0 ? '+' : ''}${pct(delta)}</b> · 각 주문 ${pct(Math.abs(delta) / 5)}</p>${table(['주문', '비중', '구분', '지정가 (KRW)', '상태'], list.map(o => [o.side + ' #' + o.split, pct(o.positionSize), o.group, fmt(o.limit), o.status]))}<p class="pl-note">${mode === 'PAPER' ? '가상 지정가 주문' : '주문 계획 미리보기'} · 기회 주문은 미체결이어도 추격하지 않습니다.${!health.healthy ? '<br>데이터가 오래되었거나 누락되어 Paper 주문 갱신이 중단됩니다.' : ''}</p>`;
+    $('#pl-orders').innerHTML = `<p>Delta <b>${delta >= 0 ? '+' : ''}${pct(delta)}</b> · 각 주문 ${pct(Math.abs(delta) / 5)} · 가격 간격 ₩${fmt((s.coefficients[1]-s.coefficients[0])*signal.row.adr)}</p>${paper && mode === 'PAPER' && paper.completion ? `<p class="pl-badge">${date(paper.completion.timestamp)} UTC 시가 · 잔량 시장가 5분할 완료 대기</p>` : table(['주문', '비중', '구분', '지정가 (KRW)', '상태'], list.map(o => [o.side + ' #' + o.split, pct(o.positionSize), o.group, fmt(o.limit), o.status]))}<p class="pl-note">${mode === 'PAPER' ? 'Paper 실행' : '지정가 배치 예시 · 실제 실행은 신호 상태에 따릅니다'} · 선행 기준 충족 시 D−3 → D−2 → D−1 잔량 재배치. 실제 교차 확정 후 다음 시가에 잔량을 완료합니다. 초기 비중 배치·0선 상태 변경도 다음 시가에 적용합니다.${paper?.campaign && mode === 'PAPER' ? `<br>시작 ${date(paper.campaign.startedAt)} · ${esc(paper.campaign.stage)} · ${esc(paper.campaign.status)}` : ''}${!health.healthy ? '<br>데이터가 오래되었거나 누락되어 Paper 주문 갱신이 중단됩니다.' : ''}</p>`;
     $('#pl-account-note').textContent = mode === 'PAPER' && paper ? `Paper 자산 ₩${fmt(capital)} · 체결 ${paper.fills.length}건 · ${paper.stopped ? '정지: ' + paper.stopReason : '브라우저가 열려 있을 때 확정 일봉으로 갱신'}` : 'SIMULATION / BACKTEST는 실제 계좌와 연결되지 않습니다.';
     $('#pl-explain').textContent = `MACD ${fmt(signal.row.line, 2)}, Signal ${fmt(signal.row.signal, 2)}, Histogram ${fmt(signal.row.histogram, 2)}. 현재가가 유지되면 ${projected ? `${projected.eta.toFixed(2)}일 내 ${name(projected.key)}` : '3일 내 교차가 계산되지 않습니다'}. 과거 ${statistics.sample}개 유사 사례 중 ${statistics.success}개가 같은 0선 위치의 교차로 이어졌습니다. ${signal.source} 기준 목표 ${pct(signal.target)}, 현재 ${pct(actual)}, 차이 ${pct(delta)}를 5분할합니다. 실제 교차가 확정되어도 이미 체결한 수량을 제외한 잔여 비중만 계산합니다. 신뢰구간은 표본 내 이항 추정이며 미래 보장이 아닙니다.`;
     $('#pl-scenarios').innerHTML = table(['Scenario', '고정 가상 가격', '예상 교차', 'ETA'], scenarios({ ...signal.row, close: p }, s).map(x => [esc(x.name), fmt(x.price), esc(name(x.event?.key)), x.event ? x.event.eta.toFixed(2) + ' Days' : '—']));
@@ -77,6 +79,7 @@ function initialize() {
     if (mode !== 'PAPER') return;
     await locked(() => {
       paper = read('paper'); if (!paper || !Array.isArray(paper.orders) || !Array.isArray(paper.fills)) { paper = null; return; }
+      if (paper.executionPolicy !== s.executionPolicy) { cancelAll(paper, 'V1.17 정책 변경 · 잔고와 이력 보존'); paper.completion=null; persistPaper(); return; }
       if (!integrity(candles).healthy) { cancelAll(paper, 'DATA FAILURE / STALE'); persistPaper(); return; }
       if (paper.stopped) return;
       const pending = rows.filter(r => r.timestamp >= paper.startedAt && (paper.lastProcessed === null || r.timestamp > paper.lastProcessed));
@@ -113,7 +116,20 @@ function initialize() {
   $('#pl-mode').onchange = async () => { mode = $('#pl-mode').value; if (mode === 'BACKTEST') $('#pl-backtest').open = true; if (mode === 'PAPER') { paper = read('paper'); await advancePaper(); } if (rows.length) render(); };
   $('#pl-paper-init').onclick = async () => {
     if (!rows.length || !integrity(candles).healthy) { status('최신 연속 확정 일봉을 먼저 갱신하세요.', true); return; }
-    await locked(() => { paper = account(s.capital, current, priceNow()); paper.startedAt = (Math.floor(Date.now() / DAY) + 1) * DAY; paper.revision = Date.now(); reconcile(paper, { ...signal, row: { ...signal.row, close: priceNow() } }, s, paper.startedAt, String(paper.revision)); persistPaper(); }); mode = 'PAPER'; $('#pl-mode').value = mode; render(); status(`Paper 계좌를 초기화했습니다. ${date(paper.startedAt)} UTC 일봉부터 주문을 평가합니다. 생성 전 당일 가격으로는 체결하지 않습니다.`);
+    await locked(() => { paper = account(s.capital, current, priceNow()); paper.executionPolicy=s.executionPolicy; paper.startedAt = (Math.floor(Date.now() / DAY) + 1) * DAY; paper.revision = Date.now(); reconcile(paper, { ...signal, row: { ...signal.row, close: priceNow() } }, s, paper.startedAt, String(paper.revision)); persistPaper(); }); mode = 'PAPER'; $('#pl-mode').value = mode; render(); status(`Paper 계좌를 초기화했습니다. ${date(paper.startedAt)} UTC 일봉부터 주문을 평가합니다. 생성 전 당일 가격으로는 체결하지 않습니다.`);
+  };
+  $('#pl-paper-resume').onclick = async () => {
+    if (!rows.length || !integrity(candles).healthy) { status('최신 연속 확정 일봉을 먼저 갱신하세요.', true); return; }
+    await locked(() => {
+      paper=read('paper'); if (!paper) return;
+      cancelAll(paper,'POLICY RESUME'); paper.stopped=false; paper.stopReason=null; paper.completion=null;
+      if (paper.campaign?.status==='ACTIVE') paper.campaign.status='CANCELLED';
+      paper.campaign=null; paper.initializedCampaign=false; paper.lastCampaignDecision=null; paper.observedCoreKey=undefined;
+      paper.executionPolicy=s.executionPolicy; paper.revision=Date.now(); paper.startedAt=(Math.floor(Date.now()/DAY)+1)*DAY;
+      reconcile(paper,{...signal,row:{...signal.row,close:priceNow()}},s,paper.startedAt,String(paper.revision)); persistPaper();
+    });
+    if (!paper) { status('저장된 Paper 계좌가 없습니다.',true); return; }
+    mode='PAPER'; $('#pl-mode').value=mode; render(); status('Paper 잔고·이력을 유지하고 다음 UTC 일봉부터 새 정책을 적용합니다.');
   };
   $('#pl-stop').onclick = async () => { await locked(() => { paper = read('paper'); if (paper) { cancelAll(paper); persistPaper(); } }); if (rows.length) render(); status('Paper 주문을 정지하고 미체결 주문을 취소했습니다.'); };
   $('#pl-form').onsubmit = async event => {
@@ -123,9 +139,9 @@ function initialize() {
       for (const key of ['fast', 'slow', 'signal', 'minSamples', 'maxSamples', 'similarityRadius', 'capital', 'envelopePeriod', 'similarityWindow']) patch[key] = Number(f.get(key));
       for (const key of ['threshold', 'fee', 'slippage', 'maxPosition', 'maxTrade', 'maxDailyLoss', 'maxVolatility']) patch[key] = Number(f.get(key)) / 100;
       patch.targets = Object.fromEntries(Object.keys(LEGACY_TARGETS).map(k => [k, Number(f.get('target_' + k)) / 100]));
-      patch.coefficients = String(f.get('coefficients')).split(',').map(Number); patch.envelopeBands = String(f.get('envelopeBands')).split(',').map(Number); patch.envelopeMA = f.get('envelopeMA'); patch.cancelUnfilled = f.has('cancelUnfilled');
+      patch.coefficients = String(f.get('coefficients')).split(',').map(Number); patch.envelopeBands = String(f.get('envelopeBands')).split(',').map(Number); patch.envelopeMA = f.get('envelopeMA'); patch.cancelUnfilled = true;
       patch.timeframeWeights = Object.fromEntries(Object.keys(FRAME).map(k => [k, Number(f.get('weight_' + k))]));
-      s = settings({ ...s, ...patch, riskModel: null }); save('settings', s); calculate();
+      s = settings({ ...s, ...patch, riskModel: null }); save('settings', s); event.target.elements.coefficients.value=s.coefficients.join(', '); result=null; $('#pl-model').disabled=true; $('#pl-download').disabled=true; calculate();
       if (mode === 'PAPER') await locked(() => { paper = read('paper'); if (paper) { paper.revision = Date.now(); reconcile(paper, { ...signal, row: { ...signal.row, close: priceNow() } }, s, (Math.floor(Date.now() / DAY) + 1) * DAY, String(paper.revision)); persistPaper(); } });
       render(); $('#pl-settings-status').textContent = '저장 완료 · 변경된 설정의 위험 모델은 재검증이 필요합니다.';
     } catch (e) { $('#pl-settings-status').textContent = e.message; }

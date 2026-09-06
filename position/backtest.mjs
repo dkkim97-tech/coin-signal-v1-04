@@ -71,7 +71,7 @@ export function simulate(prepared, config, options = {}) {
   const regimes = [...new Set(curve.map(p => p.regime))].map(regime => { let compounded = 1, peak = 1, mdd = 0, count = 0; curve.forEach((p, i) => { if (p.regime === regime) { compounded *= p.equity / (i ? curve[i - 1].equity : s.capital); peak = Math.max(peak, compounded); mdd = Math.max(mdd, 1 - compounded / peak); count++; } }); return { regime, days: count, return: compounded - 1, mdd }; });
   return { strategy, ...result, falseSignalRate: testedEvents.length ? falseEvents.length / testedEvents.length : null, evaluatedPreSignals: testedEvents.length,
     rates, averageBuy: averageFill('BUY'), averageSell: averageFill('SELL'), opportunityCost: baseline - result.totalReturn, missedOpportunity: missed,
-    curve, regimes, orders: a.orders, fillsDetail: a.fills, tradeDetails: a.trades, riskModelApplied: Boolean(s.riskModel && s.riskModel.trainedThrough < rows[first].timestamp),
+    curve, regimes, orders: a.orders, fillsDetail: a.fills, tradeDetails: a.trades, campaigns:a.campaigns || [], riskModelApplied: Boolean(s.riskModel && s.riskModel.trainedThrough < rows[first].timestamp),
     from: rows[first].timestamp, to: last?.timestamp || null };
 }
 export function research(candles, config, options = {}, progress = () => {}) {
@@ -91,7 +91,7 @@ export function research(candles, config, options = {}, progress = () => {}) {
   const comparisons = STRATEGIES.map(([strategy, label], index) => { progress(`전략 비교 ${index + 1}/8 · ${label}`); return { label, ...simulate(prepared, { ...s, riskModel: model }, { ...selected, strategy }) }; });
   const horizons = [0, 1, 2, 3].map(horizon => ({ horizon, ...simulate(prepared, s, { ...selected, strategy: horizon ? 'F' : 'B', horizon: horizon || 3 }) }));
   const thresholds = [.7, .75, .8, .85, .9].map(threshold => { progress(`확률 기준 ${(threshold * 100).toFixed()}% 비교`); return { threshold, ...simulate(prepared, { ...s, threshold }, { ...selected, strategy: 'G' }) }; });
-  const coefficientSets = [[.2, .45, .75, 1.1, 1.4], [.15, .35, .65, 1, 1.3], [.25, .5, .8, 1.2, 1.5]];
+  const coefficientSets = [[.2, .5, .8, 1.1, 1.4], [.15, .45, .75, 1.05, 1.35], [.25, .5625, .875, 1.1875, 1.5]];
   const coefficients = coefficientSets.map((coefficients, index) => ({ set: 'ABC'[index], coefficients, ...simulate(prepared, { ...s, coefficients }, { ...selected, strategy: 'G' }) }));
   const walkForward = [];
   const lastYear = new Date(rows.at(-1)?.timestamp || Date.now()).getUTCFullYear();
@@ -102,5 +102,5 @@ export function research(candles, config, options = {}, progress = () => {}) {
   }
   return { generatedAt: Date.now(), model, comparisons, horizons, thresholds, coefficients, walkForward, settings: s,
     dataFrom: rows[0]?.timestamp, dataTo: rows.at(-1)?.timestamp, trainingEnd, validationStart, validationEnd,
-    caveats: ['확정 일봉만 사용; 전일 신호 → 다음 봉 주문', 'OHLC 지정가 접촉 모형, 호가 대기열·부분 유동성 미반영', '운영 정지 한도는 Paper에 적용; 전략 비교는 정지 없이 동일 조건으로 수행', 'FIFO 부분청산 기준 거래 통계; 미청산 손익은 자산곡선에 포함', 'Buy & Hold는 비용 전 종가/최초 시가 수익률', 'Walk Forward는 확장 학습, 조절 상한 20% 고정 실험; 최종 모델과 별개'] };
+    caveats: ['확정 일봉만 사용; 전일 신호 → 다음 봉 주문', '선행 지정가 등간격; 확정 교차·초기 배치·0선 상태 변경은 다음 시가 잔량 완료', '완료 시 동일 시가의 5개 균등 수량으로 모형화; 장중 시간 간격 분할을 뜻하지 않음', '선행 조건 이탈 시 잔량 취소; 예측일만으로 강제 완료하지 않음', 'OHLC 지정가 접촉 모형, 호가 대기열·부분 유동성 미반영', '운영 정지 한도는 Paper에 적용; 전략 비교는 정지 없이 동일 조건으로 수행', 'FIFO 부분청산 기준 거래 통계; 미청산 손익은 자산곡선에 포함', 'Buy & Hold는 비용 전 종가/최초 시가 수익률', 'Walk Forward는 확장 학습, 조절 상한 20% 고정 실험; 최종 모델과 별개'] };
 }
