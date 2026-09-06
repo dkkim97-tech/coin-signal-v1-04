@@ -1,1 +1,17 @@
-{"name":"coin-signal-v1-04","private":true,"type":"module","scripts":{"test":"node --test test/*.test.mjs","start":"node scripts/dev-server.mjs","verify":"node scripts/verify.mjs"},"engines":{"node":">=22"}}
+{
+  "name": "coin-signal-v1-04",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node scripts/dev-server.mjs",
+    "verify": "node scripts/verify.mjs",
+    "start:trading": "node --env-file=.env server/main.mjs"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}

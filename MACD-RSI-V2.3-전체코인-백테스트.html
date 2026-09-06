@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>마이웨이 75 · 코인 시그널 앱 V1.17</title>
+  <title>마이웨이 75 · 코인 시그널 앱 V2.0</title>
   <style>:root { color-scheme: dark; --bg:#090c0c; --panel:#111716; --line:#26302e; --text:#eff7f4; --muted:#91a19d; --mint:#72f2bd; --amber:#f2c572; --danger:#ff776f; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,"Pretendard","Noto Sans KR",system-ui,sans-serif; background:radial-gradient(circle at 75% 0,#143126 0,transparent 33%),var(--bg); color:var(--text); }
@@ -69,14 +69,14 @@ footer { padding:20px 0 50px; color:var(--muted); font-size:12px; }
 <body>
   <header>
     <div>
-      <p class="eyebrow">LOCAL STRATEGY LAB · APP V1.17</p>
-      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V1.17</span></h1>
+      <p class="eyebrow">LOCAL STRATEGY LAB · APP V2.0</p>
+      <h1>마이웨이 75 · 코인 시그널 <span style="color:var(--mint)">V2.0</span></h1>
       <p class="subtitle">MACD 1: RSI&gt;30·0선 돌파 · MACD 2: MACD(12,26,9) · MACD 3: MACD(18,39,9) 상태별 100%·50%·50%·0% 보유</p>
     </div>
     <div class="header-actions">
       <button id="refresh-all-data" class="update-button" data-refresh-all type="button">↻ 업데이트</button>
       <small id="update-status" class="update-status">내장 자료 기준</small>
-      <div class="status"><span></span> 실주문 잠금</div>
+      <div class="status"><span></span> 실행 상태는 거래 관리에서 확인</div>
       <div class="capture-actions"><button class="copy-button" data-screen-copy type="button">화면 캡처 복사</button><button id="download-pdf" class="pdf-button" data-pdf-export type="button">화면 캡처 PDF 저장</button></div>
       <a class="rate-dashboard-button" href="미국-금리-시장-상관관계.html">미국 금리 창 열기 →</a>
     </div>
@@ -75697,6 +75697,7 @@ function nearestPoint(points, timestamp) {
   <script src="strategy-period-lab.js"></script>
   <script src="investment-mode-switch.js?v=1.4"></script>
   <script src="futures-timeframe-simulator.js?v=1.1"></script>
-  <script type="module" src="position/dashboard.mjs?v=1.17"></script>
+
+<script type="module" src="/trading/dashboard.mjs?v=2.0"></script>
 </body>
 </html>

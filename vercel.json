@@ -1,18 +1,44 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/futures", "destination": "/index.html" },
-    { "source": "/futures/", "destination": "/index.html" },
-    { "source": "/futures/:path*", "destination": "/:path*" }
+    {
+      "source": "/futures",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/futures/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/futures/:path*",
+      "destination": "/:path*"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/trading.js": {
+      "maxDuration": 60
+    },
+    "api/exchange.js": {
+      "maxDuration": 60
+    }
+  }
 }

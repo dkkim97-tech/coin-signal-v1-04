@@ -3,3 +3,10 @@
 
 .vercel
 reports/
+
+node_modules/
+.env
+.env.*
+!.env.example
+server/data/
+*.sqlite*

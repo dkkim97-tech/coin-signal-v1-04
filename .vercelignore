@@ -1,0 +1,5 @@
+server/data
+.env*
+reports
+test
+node_modules
