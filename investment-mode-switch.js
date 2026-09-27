@@ -68,3 +68,8 @@ if (window.__HALVING_DATA__) {
   extension.src = '/halving-latest-costs.js?v=1.0';
   document.body.appendChild(extension);
 }
+if (window.__COIN_DATA__ && document.querySelector('#candle-chart')) {
+  const navigation = document.createElement('script');
+  navigation.src = '/chart-wheel-navigation.js?v=1.0';
+  document.body.appendChild(navigation);
+}
