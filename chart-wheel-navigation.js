@@ -9,6 +9,8 @@
   if(typeof document==='undefined'||!globalThis.__COIN_DATA__||typeof applyPeriodNavigation!=='function')return;
   const charts=['candle-chart','macd-chart','rsi-chart','cci-chart'].map(id=>document.getElementById(id)).filter(Boolean);
   if(!charts.length)return;
+  const originalCompactPrice=formatCompactPrice;
+  formatCompactPrice=function(value){return Math.abs(value)>=100000000&&Math.abs(value)<1000000000000?(value/100000000).toFixed(2)+'억':originalCompactPrice(value);};
   const oldApply=applyPeriodNavigation,oldReset=resetPeriodNavigation,oldMove=moveChartPeriod;
   let viewport=null,frame=0,drag=null,activeData=null,activeTimeframe=null;
   const bar=document.createElement('div');bar.style.cssText='display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;color:#b8cec4;font-size:12px';
