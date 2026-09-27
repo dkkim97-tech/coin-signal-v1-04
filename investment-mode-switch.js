@@ -62,3 +62,9 @@
     header.insertAdjacentElement("afterend", notice);
   }
 })();
+
+if (window.__HALVING_DATA__) {
+  const extension = document.createElement('script');
+  extension.src = '/halving-latest-costs.js?v=1.0';
+  document.body.appendChild(extension);
+}
