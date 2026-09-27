@@ -2,7 +2,7 @@
   "use strict";
 
   const isFutures = /(^|\/)futures(\/|$)/i.test(decodeURIComponent(location.pathname || "")) || new URLSearchParams(location.search).get("mode") === "futures";
-
+  if (!isFutures) return;
 
   const MARKETS = ["BTC", "ETH", "XRP", "SOL", "ADA", "DOGE", "AVAX", "DOT", "XLM", "UNI", "LINK", "ONDO"];
   const STRATEGIES = [
@@ -11,7 +11,7 @@
     { id: "MACD 3", name: "MACD(18,39,9) 비중", color: "#ff9d5c" },
     { id: "MACD 4", name: "MACD(18,39,9) 롱·숏", color: "#4ca6ff" },
     { id: "MACD 5", name: "롱·숏 2배", color: "#ff5fb7" },
-  ].filter(s => isFutures || !["MACD 4", "MACD 5"].includes(s.id));
+  ];
   const TIMEFRAMES = {
     day: { label: "일봉", endpoint: "days", milliseconds: 86400000 },
     240: { label: "4시간봉", endpoint: "minutes/240", milliseconds: 14400000 },
@@ -28,7 +28,7 @@
     .tf-simulator-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:17px}.tf-simulator-head h2{margin:3px 0 7px;font-size:24px}.tf-simulator-head p{margin:0;color:var(--muted);line-height:1.6}.tf-simulator-badge{white-space:nowrap;border:1px solid rgba(76,166,255,.55);border-radius:999px;padding:8px 12px;color:#8fd0ff;background:rgba(76,166,255,.09);font-size:12px;font-weight:850}
     .tf-controls{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr)) auto;gap:11px;align-items:end;padding:14px;border:1px solid var(--line);border-radius:12px;background:#090f10}.tf-controls label{display:grid;gap:6px;color:var(--muted);font-size:12px}.tf-controls select,.tf-controls button{min-height:42px;border:1px solid #34504b;border-radius:9px;background:#0c1515;color:var(--text);padding:0 12px;font:inherit}.tf-controls button{border-color:#4ca6ff;background:#4ca6ff;color:#06101a;font-weight:900;cursor:pointer}.tf-controls button:disabled{opacity:.55;cursor:wait}
     .tf-status{margin:12px 2px;color:#9fb8b1;font-size:13px}.tf-status.is-error{color:#ff8c84}.tf-result-meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.tf-result-meta span{padding:6px 9px;border-radius:7px;background:#111c1b;color:#b9cdc7;font-size:12px}
-    .tf-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:14px 0}.tf-summary-card{padding:12px;border:1px solid var(--line);border-top:3px solid var(--strategy-color);border-radius:10px;background:#0a1111}.tf-summary-card span,.tf-summary-card small{display:block;color:var(--muted);font-size:11px}.tf-summary-card strong{display:block;margin:7px 0 5px;color:var(--strategy-color);font-size:19px}.tf-summary-card em{font-style:normal;color:var(--text);font-size:12px}
+    .tf-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:14px 0}.tf-summary-card{padding:12px;border:1px solid var(--line);border-top:3px solid var(--strategy-color);border-radius:10px;background:#0a1111}.tf-summary-card span,.tf-summary-card small{display:block;color:var(--muted);font-size:11px}.tf-summary-card strong{display:block;margin:7px 0 5px;color:var(--strategy-color);font-size:19px}.tf-summary-card em{font-style:normal;color:var(--text);font-size:12px}
     .tf-chart-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#070c0d}.tf-chart{display:block;width:100%;min-width:760px;height:auto}.tf-table-wrap{overflow:auto;margin-top:13px;max-height:390px;border:1px solid var(--line);border-radius:11px}.tf-table{width:100%;border-collapse:collapse;font-size:12px}.tf-table th{position:sticky;top:0;background:#111b1a;color:#9fb8b1;z-index:1}.tf-table th,.tf-table td{padding:10px 9px;border-bottom:1px solid #20302d;text-align:right;white-space:nowrap}.tf-table th:first-child,.tf-table td:first-child{text-align:left}.tf-positive{color:#72f2bd}.tf-negative{color:#ff776f}.tf-note{margin:12px 0 0;color:#839a94;font-size:11px;line-height:1.65}
     @media(max-width:900px){.tf-controls{grid-template-columns:repeat(2,1fr)}.tf-summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.tf-simulator{padding:15px}.tf-simulator-head{display:block}.tf-simulator-badge{display:inline-block;margin-top:10px}.tf-controls{grid-template-columns:1fr}.tf-summary-grid{grid-template-columns:1fr}}
   `;
@@ -38,22 +38,19 @@
   section.className = "tf-simulator";
   section.id = "futures-timeframe-simulator";
   section.innerHTML = `
-    <div class="tf-simulator-head"><div><p class="eyebrow">MULTI-TIMEFRAME STRATEGY LAB</p><h2>일봉 · 4시간봉 · 1시간봉 단순 보유 · EMA 35일 · MACD 비교 시뮬레이션</h2><p>종목과 봉 주기를 선택하면 동일한 체결 원칙으로 ${isFutures ? "일곱" : "다섯"} 전략을 동시에 다시 계산합니다.</p></div><span class="tf-simulator-badge">${isFutures ? "선물" : "현물"} 전략 비교</span></div>
+    <div class="tf-simulator-head"><div><p class="eyebrow">MULTI-TIMEFRAME FUTURES LAB</p><h2>일봉 · 4시간봉 · 1시간봉 MACD 1~5 시뮬레이션</h2><p>종목과 봉 주기를 선택하면 동일한 체결 원칙으로 다섯 전략을 동시에 다시 계산합니다.</p></div><span class="tf-simulator-badge">선물 투자 전용</span></div>
     <div class="tf-controls">
       <label>종목<select id="tf-market">${MARKETS.map((symbol) => `<option value="KRW-${symbol}">${symbol}</option>`).join("")}</select></label>
       <label>봉 주기<select id="tf-timeframe"><option value="day">일봉</option><option value="240">4시간봉</option><option value="60">1시간봉</option></select></label>
       <label>분석 봉 수<select id="tf-count"><option value="200">최근 200봉</option><option value="500">최근 500봉</option><option value="1000" selected>최근 1,000봉</option><option value="2000">최근 2,000봉</option></select></label>
-      <label>자료<select id="tf-source"><option value="stored">내장 과거 자료</option><option value="latest" selected>최신 공개 시세</option></select></label>
       <label>초기 자산<select id="tf-capital"><option value="100000000">1억원</option><option value="10000000">1천만원</option><option value="1000000">1백만원</option></select></label>
-      <button id="tf-run" type="button">단순 보유 · EMA 35일 · MACD 비교 시뮬레이션</button>
+      <button id="tf-run" type="button">MACD 1~5 시뮬레이션</button>
     </div>
     <p id="tf-status" class="tf-status">BTC · 최근 1,000개 일봉 기준으로 실행할 수 있습니다.</p>
-    <div id="tf-output" hidden><div id="tf-meta" class="tf-result-meta"></div><div id="tf-cards" class="tf-summary-grid"></div><div class="tf-chart-wrap"><svg id="tf-chart" class="tf-chart" viewBox="0 0 1100 430" role="img" aria-label="시간봉별 MACD 1부터 MACD 5까지 누적수익률"></svg></div><div class="tf-table-wrap"><table class="tf-table"><thead><tr><th>전략</th><th>최종 자산</th><th>수익률</th><th>MDD</th><th>비중 변경</th><th>현재 상태</th></tr></thead><tbody id="tf-table-body"></tbody></table></div><p class="tf-note">단순 보유는 첫 평가 봉 다음 시가에 1배 매수 후 보유합니다. EMA는 봉 주기와 무관하게 확정된 35개 일봉으로 계산하며, 종가가 선 위면 롱 100%, 아래면 현금 대기합니다. 확정 일봉 이후 첫 시가에 적용합니다. MACD·RSI는 선택한 봉 주기의 이전 봉 신호를 사용합니다. 종료 보유분은 종가로 평가합니다. 수수료 0.05%, 슬리피지 0.08%를 반영하며 펀딩비·유지증거금·거래소별 강제청산 규칙은 포함하지 않습니다. 진행 중인 최신 봉은 제외되며 결과는 투자 수익을 보장하지 않습니다.</p></div>
+    <div id="tf-output" hidden><div id="tf-meta" class="tf-result-meta"></div><div id="tf-cards" class="tf-summary-grid"></div><div class="tf-chart-wrap"><svg id="tf-chart" class="tf-chart" viewBox="0 0 1100 430" role="img" aria-label="시간봉별 MACD 1부터 MACD 5까지 누적수익률"></svg></div><div class="tf-table-wrap"><table class="tf-table"><thead><tr><th>전략</th><th>최종 자산</th><th>수익률</th><th>MDD</th><th>비중 변경</th><th>현재 상태</th></tr></thead><tbody id="tf-table-body"></tbody></table></div><p class="tf-note">확정된 이전 봉의 MACD·RSI 상태를 다음 봉 시가에 적용합니다. 수수료 0.05%, 슬리피지 0.08%를 반영하며 펀딩비·유지증거금·거래소별 강제청산 규칙은 포함하지 않습니다. 진행 중인 최신 봉은 제외되며 결과는 투자 수익을 보장하지 않습니다.</p></div>
   `;
-  const anchor = document.querySelector(".live-results") || document.querySelector("main");
-  if (anchor?.matches("main")) anchor.prepend(section); else anchor?.insertAdjacentElement("beforebegin", section);
+  document.querySelector(".live-results")?.insertAdjacentElement("beforebegin", section);
 
-  const dataSource = section.querySelector("#tf-source");
   const marketSelect = section.querySelector("#tf-market");
   const timeframeSelect = section.querySelector("#tf-timeframe");
   const countSelect = section.querySelector("#tf-count");
@@ -62,11 +59,8 @@
   const status = section.querySelector("#tf-status");
   const output = section.querySelector("#tf-output");
 
-  if (window.__COIN_DATA__?.market) marketSelect.value = window.__COIN_DATA__.market;
-  status.textContent = `${marketSelect.value.replace("KRW-", "")} · 최근 1,000개 일봉 기준으로 실행할 수 있습니다.`;
   runButton.addEventListener("click", runSimulation);
-  [marketSelect, timeframeSelect, countSelect, capitalSelect, dataSource].forEach((element) => element.addEventListener("change", () => {
-    output.hidden = true;
+  [marketSelect, timeframeSelect, countSelect].forEach((element) => element.addEventListener("change", () => {
     status.classList.remove("is-error");
     status.textContent = `${marketSelect.value.replace("KRW-", "")} · 최근 ${Number(countSelect.value).toLocaleString()}개 ${TIMEFRAMES[timeframeSelect.value].label} 기준으로 실행할 수 있습니다.`;
   }));
@@ -77,51 +71,24 @@
     const count = Number(countSelect.value);
     const initialEquity = Number(capitalSelect.value) || INITIAL_EQUITY;
     runButton.disabled = true;
-    [marketSelect, timeframeSelect, countSelect, capitalSelect, dataSource].forEach(el => { el.disabled = true; });
     output.hidden = true;
     status.classList.remove("is-error");
     try {
-      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} ${count.toLocaleString()}봉 ${dataSource.value === "stored" ? "내장 자료 읽는 중" : "다운로드 중"}…`;
-      const candles = dataSource.value === "stored" ? await storedCandles(market, timeframe, count) : await fetchCandles(market, timeframe, count, (loaded) => {
+      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} ${count.toLocaleString()}봉 다운로드 중…`;
+      const candles = await fetchCandles(market, timeframe, count, (loaded) => {
         status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} 다운로드 ${loaded.toLocaleString()}/${count.toLocaleString()}봉`;
       });
       if (candles.length < 80) throw new Error(`MACD 계산에 필요한 봉이 부족합니다 (${candles.length}봉)`);
-      status.textContent = `단순 보유 · EMA 35일 · MACD 비교 전략을 계산하고 있습니다…`;
-      const daily = dataSource.value === "stored" ? await storedCandles(market, "day", Infinity) : await fetchCandles(market, "day", Math.min(2000, Math.ceil((Date.now() - candles[0].timestamp) / 86400000) + 200), () => {});
-      const results = simulateAll(candles, market, initialEquity, daily);
+      status.textContent = `MACD 1~5 전략을 계산하고 있습니다…`;
+      const results = simulateAll(candles, market, initialEquity);
       renderResults(results, candles, market, timeframe);
-      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} 단순 보유 · EMA 35일 · MACD 비교 시뮬레이션 완료`;
+      status.textContent = `${market.replace("KRW-", "")} ${TIMEFRAMES[timeframe].label} MACD 1~5 시뮬레이션 완료`;
     } catch (error) {
       status.classList.add("is-error");
       status.textContent = `시뮬레이션 실패: ${String(error?.message || error)}`;
     } finally {
       runButton.disabled = false;
-      [marketSelect, timeframeSelect, countSelect, capitalSelect, dataSource].forEach(el => { el.disabled = false; });
     }
-  }
-
-  async function storedCandles(market, timeframe, count) {
-    const key = { day: "d1", "240": "h4", "60": "h1" }[timeframe];
-    let data = window.__COIN_DATA__?.market === market ? window.__COIN_DATA__ : cache.get("stored|" + market);
-    if (!data) {
-      const response = await fetch(market.replace("KRW-", "") + "-MACD-RSI-V2.3-ALL.html");
-      if (!response.ok) throw Error("내장 코인 자료 읽기 실패");
-      const text = await response.text(), marker = /window\.__COIN_DATA__\s*=\s*/.exec(text);
-      if (!marker) throw Error("내장 가격 데이터 없음");
-      const start = marker.index + marker[0].length;
-      let depth = 0, quoted = false, escaped = false;
-      for (let i = start; i < text.length; i++) {
-        const c = text[i];
-        if (quoted) { if (escaped) escaped = false; else if (c === "\\") escaped = true; else if (c === '"') quoted = false; }
-        else if (c === '"') quoted = true;
-        else if (c === '{') depth++;
-        else if (c === '}' && --depth === 0) { data = JSON.parse(text.slice(start, i + 1)); break; }
-      }
-      if (!data) throw Error("내장 가격 데이터 형식 오류");
-      cache.set("stored|" + market, data);
-    }
-    const rows = window.CoinBaselines.normalize(data.candles[key] || []);
-    return rows.filter(c => c.timestamp + TIMEFRAMES[timeframe].milliseconds <= Date.now()).slice(-count);
   }
 
   async function fetchCandles(market, timeframe, requestedCount, onProgress) {
@@ -134,7 +101,7 @@
       if (proxy.ok) {
         const payload = await proxy.json();
         if (Array.isArray(payload.candles) && payload.candles.length) {
-          const candles = payload.candles.map((candle) => ({ timestamp: Number(candle.timestamp), open: Number(candle.open), high: Number(candle.high), low: Number(candle.low), close: Number(candle.close) })).filter((candle) => Number.isFinite(candle.timestamp) && candle.timestamp + config.milliseconds <= Date.now() && candle.open > 0 && candle.high > 0 && candle.low > 0 && candle.close > 0).sort((a, b) => a.timestamp - b.timestamp).slice(-requestedCount);
+          const candles = payload.candles.map((candle) => ({ timestamp: Number(candle.timestamp), open: Number(candle.open), high: Number(candle.high), low: Number(candle.low), close: Number(candle.close) })).filter((candle) => Number.isFinite(candle.timestamp) && candle.open > 0 && candle.high > 0 && candle.low > 0 && candle.close > 0).sort((a, b) => a.timestamp - b.timestamp).slice(-requestedCount);
           onProgress(candles.length);
           cache.set(cacheKey, candles);
           return candles;
@@ -172,7 +139,7 @@
     return candles;
   }
 
-  function simulateAll(candles, market, initialEquity, daily = candles) {
+  function simulateAll(candles, market, initialEquity) {
     const closes = candles.map((candle) => candle.close);
     const rsi14 = rsi(closes, 14);
     const macd12 = macd(closes, 12, 26, 9);
@@ -184,7 +151,7 @@
       "MACD 4": planAllocation(macd18.line, macd18.signal, true, false),
       "MACD 5": planAllocation(macd18.line, macd18.signal, true, true),
     };
-    return [...window.CoinBaselines.run(candles, daily, { market, initialEquity }), ...STRATEGIES.map((strategy) => simulate(candles, plans[strategy.id], strategy, market, initialEquity))];
+    return STRATEGIES.map((strategy) => simulate(candles, plans[strategy.id], strategy, market, initialEquity));
   }
 
   function simulate(candles, plan, strategy, market, initialEquity) {
@@ -287,7 +254,7 @@
   function renderResults(results, candles, market, timeframe) {
     const label = TIMEFRAMES[timeframe].label;
     const start = candles[0].timestamp, end = candles.at(-1).timestamp;
-    section.querySelector("#tf-meta").innerHTML = `<span>${market.replace("KRW-", "")}</span><span>${dataSource.value === "stored" ? "내장 과거 자료" : "최신 공개 시세"}</span><span>${label}</span><span>${candles.length.toLocaleString()}봉</span><span>${formatDate(start, timeframe)} ~ ${formatDate(end, timeframe)}</span><span>다음 봉 시가 체결</span>`;
+    section.querySelector("#tf-meta").innerHTML = `<span>${market.replace("KRW-", "")}</span><span>${label}</span><span>${candles.length.toLocaleString()}봉</span><span>${formatDate(start, timeframe)} ~ ${formatDate(end, timeframe)}</span><span>다음 봉 시가 체결</span>`;
     section.querySelector("#tf-cards").innerHTML = results.map((result) => `<article class="tf-summary-card" style="--strategy-color:${result.color}"><span>${result.id} · ${result.name}</span><strong>${formatPercent(result.totalReturn)}</strong><em>최종 ${formatWon(result.finalEquity)}</em><small>MDD ${formatPercent(-result.maxDrawdown)} · 변경 ${result.changes}회${result.liquidated ? " · 청산" : ""}</small></article>`).join("");
     section.querySelector("#tf-table-body").innerHTML = results.map((result) => `<tr><td style="color:${result.color};font-weight:850">${result.id} · ${result.name}</td><td>${formatWon(result.finalEquity)}</td><td class="${result.totalReturn >= 0 ? "tf-positive" : "tf-negative"}">${formatPercent(result.totalReturn)}</td><td class="tf-negative">${formatPercent(-result.maxDrawdown)}</td><td>${result.changes}회</td><td>${result.liquidated ? "계좌 청산" : exposureLabel(result.exposure)}</td></tr>`).join("");
     drawChart(results, market, label);
@@ -300,15 +267,15 @@
     const points = results.flatMap((result) => result.curve);
     const start = Math.min(...points.map((point) => point.timestamp)), end = Math.max(...points.map((point) => point.timestamp));
     const min = Math.min(0, ...points.map((point) => point.return)), max = Math.max(0.01, ...points.map((point) => point.return)), span = max - min || 1;
-    const left = 76, right = 1065, top = 80, bottom = 370;
+    const left = 76, right = 1065, top = 40, bottom = 370;
     const x = (timestamp) => left + (timestamp - start) / Math.max(1, end - start) * (right - left);
     const y = (value) => bottom - (value - min) / span * (bottom - top);
     const ticks = Array.from({ length: 5 }, (_, index) => min + span * index / 4);
     const grid = ticks.map((value) => `<line x1="${left}" y1="${y(value)}" x2="${right}" y2="${y(value)}" stroke="#20302d"/><text x="${left - 10}" y="${y(value) + 4}" text-anchor="end" fill="#829b94" font-size="11">${(value * 100).toFixed(0)}%</text>`).join("");
     const paths = results.map((result) => `<path d="${result.curve.map((point, index) => `${index ? "L" : "M"}${x(point.timestamp).toFixed(1)},${y(point.return).toFixed(1)}`).join(" ")}" fill="none" stroke="${result.color}" stroke-width="2.4"${result.id === "MACD 3" ? ' stroke-dasharray="8 4"' : result.id === "MACD 4" ? ' stroke-dasharray="12 4"' : result.id === "MACD 5" ? ' stroke-dasharray="5 3"' : ""}><title>${result.id} ${formatPercent(result.totalReturn)}</title></path>`).join("");
-    const legend = results.map((result, index) => `<g transform="translate(${left + (index % 4) * 247},${18 + Math.floor(index / 4) * 25})"><line x1="0" y1="0" x2="24" y2="0" stroke="${result.color}" stroke-width="4"/><text x="31" y="4" fill="#bdd0cb" font-size="12">${result.id} ${formatPercent(result.totalReturn)}</text></g>`).join("");
+    const legend = results.map((result, index) => `<g transform="translate(${left + index * 185},18)"><line x1="0" y1="0" x2="24" y2="0" stroke="${result.color}" stroke-width="4"/><text x="31" y="4" fill="#bdd0cb" font-size="12">${result.id} ${formatPercent(result.totalReturn)}</text></g>`).join("");
     const dates = [start, start + (end - start) / 2, end].map((timestamp) => `<text x="${x(timestamp)}" y="402" text-anchor="middle" fill="#829b94" font-size="11">${new Date(timestamp).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}</text>`).join("");
-    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${timeframeLabel} 단순 보유 · EMA 35일 · MACD 비교 누적수익률</title>${legend}${grid}<line x1="${left}" y1="${y(0)}" x2="${right}" y2="${y(0)}" stroke="#55716a" stroke-dasharray="3 4"/>${paths}${dates}`;
+    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${timeframeLabel} MACD 1~5 누적수익률</title>${legend}${grid}<line x1="${left}" y1="${y(0)}" x2="${right}" y2="${y(0)}" stroke="#55716a" stroke-dasharray="3 4"/>${paths}${dates}`;
   }
 
   function exposureLabel(value) { return value === -2 ? "숏 2배" : value === 2 ? "롱 2배" : value === 1 ? "롱 100%" : value === 0.5 ? "롱 50%" : value === -1 ? "숏 100%" : "현금 100%"; }

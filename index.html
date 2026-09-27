@@ -75331,7 +75331,7 @@ function comparisonRowsForPeriod(result, selectedFromYear, selectedToYear, metri
 function comparisonRowsForYear(result, selectedYear, metric) { return selectedYear === "ALL" ? comparisonRowsForPeriod(result, "ALL", "ALL", metric) : comparisonRowsForPeriod(result, selectedYear, selectedYear, metric); }
 function groupComparisonRowsByCoin(rows) {
   const marketOrder = new Map([...new Set(rows.map((row) => row.market))].map((market, index) => [market, index]));
-  const strategyOrder = (strategy = "") => strategy.startsWith("MACD 1") ? 1 : strategy.startsWith("MACD 2") ? 2 : strategy.startsWith("MACD 3") ? 3 : strategy.startsWith("MACD 4") ? 4 : strategy.startsWith("MACD 5") ? 5 : 99;
+  const strategyOrder = (strategy = "") => strategy === "단순 보유" ? -2 : strategy === "EMA 35일" ? -1 : strategy.startsWith("MACD 1") ? 1 : strategy.startsWith("MACD 2") ? 2 : strategy.startsWith("MACD 3") ? 3 : strategy.startsWith("MACD 4") ? 4 : strategy.startsWith("MACD 5") ? 5 : 99;
   return [...rows].sort((left, right) => (marketOrder.get(left.market) - marketOrder.get(right.market)) || (strategyOrder(left.strategy) - strategyOrder(right.strategy)) || String(left.strategy).localeCompare(String(right.strategy), "ko"));
 }
 function annualRowsForMarket(result, market, years) { const bases = result.summaries.filter((row) => row.market === market); if (!bases.length) return []; const rows = bases.map((base) => ({ ...base, market: "전체 기간", annualReturn: annualizedReturn(base) })); for (const year of [...years].sort((a, b) => a - b)) { const periodRows = comparisonRowsForYear(result, String(year), "annualReturn").filter((item) => item.market === market); rows.push(...periodRows.map((row) => ({ ...row, market: `${year}년` }))); } return rows; }
@@ -75615,7 +75615,7 @@ function drawComparisonChart(svg, rows, metric) {
     const groupLength = groupStart ? rows.slice(index).findIndex((item) => item.market !== row.market) : 0;
     const normalizedGroupLength = groupStart ? (groupLength === -1 ? rows.length - index : groupLength) : 0;
     const groupBand = groupStart ? `<rect class="coin-group-band${groupIndex % 2 ? " is-alt" : ""}" x="6" y="${y - 8}" width="748" height="${normalizedGroupLength * rowGap - 2}" rx="8"><title>${row.market.replace("KRW-", "")} · MACD 전략 비교 그룹</title></rect>` : "";
-    const strategyCss = row.strategy?.startsWith("MACD 5") ? "bar-macd5" : row.strategy?.startsWith("MACD 4") ? "bar-macd4" : row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
+    const strategyCss = row.strategy === "단순 보유" ? "bar-hold" : row.strategy === "EMA 35일" ? "bar-ema35" : row.strategy?.startsWith("MACD 5") ? "bar-macd5" : row.strategy?.startsWith("MACD 4") ? "bar-macd4" : row.strategy?.startsWith("MACD 3") ? "bar-macd3" : row.strategy?.startsWith("MACD 2") ? "bar-macd2" : "bar-macd1";
     const css = isReturn ? `${value >= 0 ? "bar-positive" : "bar-negative"} ${strategyCss}` : strategyCss;
     const textX = isReturn ? 748 : valueX + 7;
     const anchor = isReturn ? "end" : "start";
@@ -75693,10 +75693,13 @@ function nearestPoint(points, timestamp) {
   <script src="macd3-latest-extension.js?v=1.0"></script>
   <script src="macd4-latest-extension.js?v=1.0"></script>
   <script src="macd5-latest-extension.js?v=1.0"></script>
-  <script src="macd2-chart-overlay.js?v=1.5"></script>
+  <script src="macd2-chart-overlay.js?v=3.0"></script>
   <script src="strategy-period-lab.js"></script>
   <script src="investment-mode-switch.js?v=1.4"></script>
-  <script src="futures-timeframe-simulator.js?v=1.1"></script>
+  <script src="baseline-core.js?v=3.0"></script>
+<script src="baseline-data.js?v=3.0"></script>
+<script src="baseline-overview.js?v=3.0"></script>
+<script src="futures-timeframe-simulator.js?v=3.0"></script>
 
 <script type="module" src="/trading/dashboard.mjs?v=2.01"></script>
 </body>

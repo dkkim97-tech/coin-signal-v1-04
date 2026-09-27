@@ -35,7 +35,7 @@
   document.querySelector("#actual-equity-chart")?.insertAdjacentElement("beforebegin", scenario);
 
   window.drawActualDetail = function drawMacdComparison(result, market) {
-    const strategies = ["MACD 1 · 0선 돌파", "MACD 2 · 0선×골든/데드 보유비중", "MACD 3 · MACD(18,39,9) 0선×골든/데드 보유비중", ...(isFutures ? ["MACD 4 · MACD(18,39,9) 선물 롱/숏 보유비중", "MACD 5 · 롱/숏 2배"] : [])];
+    const strategies = ["단순 보유", "EMA 35일", "MACD 1 · 0선 돌파", "MACD 2 · 0선×골든/데드 보유비중", "MACD 3 · MACD(18,39,9) 0선×골든/데드 보유비중", ...(isFutures ? ["MACD 4 · MACD(18,39,9) 선물 롱/숏 보유비중", "MACD 5 · 롱/숏 2배"] : [])];
     const entries = strategies.map((strategy) => ({
       strategy,
       summary: result.summaries.find((row) => row.market === market && row.strategy === strategy),
@@ -53,7 +53,7 @@
     const yReturn = (value) => returnBottom - (value - minReturn) / returnSpan * (returnBottom - top);
     const yDrawdown = (value) => ddTop + value / maxDrawdown * (ddBottom - ddTop);
     const paths = entries.map((entry, index) => {
-      const css = entry.strategy.startsWith("MACD 1") ? "macd1" : entry.strategy.startsWith("MACD 2") ? "macd2" : entry.strategy.startsWith("MACD 3") ? "macd3" : entry.strategy.startsWith("MACD 4") ? "macd4" : "macd5";
+      const css = entry.strategy === "단순 보유" ? "hold" : entry.strategy === "EMA 35일" ? "ema35" : entry.strategy.startsWith("MACD 1") ? "macd1" : entry.strategy.startsWith("MACD 2") ? "macd2" : entry.strategy.startsWith("MACD 3") ? "macd3" : entry.strategy.startsWith("MACD 4") ? "macd4" : "macd5";
       const returnPath = entry.series.equityCurve.map((point, pointIndex) => `${pointIndex ? "L" : "M"}${x(point.timestamp).toFixed(1)},${yReturn(point.return).toFixed(1)}`).join(" ");
       const drawdownPath = entry.series.equityCurve.map((point, pointIndex) => `${pointIndex ? "L" : "M"}${x(point.timestamp).toFixed(1)},${yDrawdown(point.drawdown).toFixed(1)}`).join(" ");
       return `<path class="actual-return-line ${css}" d="${returnPath}"><title>${entry.strategy} 최종 ${formatPercent(entry.summary.totalReturn)}</title></path><path class="actual-dd-line ${css}" d="${drawdownPath}"><title>${entry.strategy} MDD ${formatPercent(-entry.summary.maxDrawdown)}</title></path>`;
@@ -62,7 +62,7 @@
     const grids = returnTicks.map((tick) => `<line class="chart-grid" x1="${left}" y1="${yReturn(tick)}" x2="${right}" y2="${yReturn(tick)}"/><text class="chart-tick" x="${left - 10}" y="${yReturn(tick) + 4}" text-anchor="end">${(tick * 100).toFixed(0)}%</text>`).join("");
     const dates = [start, start + (end - start) / 2, end].map((timestamp) => `<text class="chart-tick" x="${x(timestamp)}" y="425" text-anchor="middle">${new Date(timestamp).toLocaleDateString("ko-KR", { year: "numeric", month: "short" })}</text>`).join("");
     const totals = entries.map((entry) => `${entry.strategy.split(" · ")[0]}: ${formatPercent(entry.summary.totalReturn)}${entry.summary.tradingHalted ? "(청산)" : ""}`).join(" · ");
-    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${isFutures ? "MACD 1·2·3·4·5" : "MACD 1·MACD 2·MACD 3"} 누적수익률 비교</title>${grids}<line class="actual-zero" x1="${left}" y1="${yReturn(0)}" x2="${right}" y2="${yReturn(0)}"/>${paths}<line class="chart-grid" x1="${left}" y1="${ddTop}" x2="${right}" y2="${ddTop}"/><text class="chart-tick" x="${left - 10}" y="${ddTop + 4}" text-anchor="end">0%</text><text class="chart-tick" x="${left - 10}" y="${ddBottom}" text-anchor="end">-${(maxDrawdown * 100).toFixed(0)}%</text>${dates}<text class="chart-value" x="${right}" y="22" text-anchor="end">${totals}</text>`;
+    svg.innerHTML = `<title>${market.replace("KRW-", "")} ${isFutures ? "MACD 1·2·3·4·5" : "MACD 1·MACD 2·MACD 3"} 누적수익률 비교</title>${grids}<line class="actual-zero" x1="${left}" y1="${yReturn(0)}" x2="${right}" y2="${yReturn(0)}"/>${paths}<line class="chart-grid" x1="${left}" y1="${ddTop}" x2="${right}" y2="${ddTop}"/><text class="chart-tick" x="${left - 10}" y="${ddTop + 4}" text-anchor="end">0%</text><text class="chart-tick" x="${left - 10}" y="${ddBottom}" text-anchor="end">-${(maxDrawdown * 100).toFixed(0)}%</text>${dates}<text class="chart-value" x="${right}" y="22" text-anchor="end">${entries.length}개 전략 비교</text>`;
     document.querySelector("#detail-reading").textContent = `${market.replace("KRW-", "")}의 동일 기간 ${isFutures ? "MACD 1·2·3과 MACD 4(1배)·MACD 5(롱/숏 2배)" : "MACD 1·MACD 2(12,26,9)·MACD 3(18,39,9)"} 누적수익률을 함께 표시합니다. 전일 확정 MACD 상태를 다음 일봉 시가부터 적용하고 수수료 0.05%와 슬리피지 0.08%를 반영했습니다.${isFutures ? " 레버리지 구간 외에는 MACD 4 기본 비중을 사용하며, 일봉 고가·저가에서 계좌 가치가 0 이하가 되면 청산 처리합니다. 펀딩비와 거래소별 유지증거금은 미반영입니다." : ""}`;
   };
 
