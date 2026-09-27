@@ -43,7 +43,7 @@ $('#tc-strategy').onchange=()=>{invalidate();decision=null;$('#tc-prob').textCon
 $('#tc-load').onclick=()=>run(async()=>{
   invalidate();const s=selected();market=await json('/api/exchange?'+new URLSearchParams({exchange,coin:s.coin}));$('#tc-price').textContent=fmt(market.price,futures?3:0);
   let end=Date.now();const map=new Map();
-  for(let i=0;i<45;i++) {message(`${name} 완성 일봉 수집 중 · ${map.size}개`);const page=await json('/api/exchange?'+new URLSearchParams({exchange,coin:s.coin,action:'candles',end:String(end)}));if(!page.candles.length)break;for(const c of page.candles)map.set(c.timestamp,c);const first=Math.min(...page.candles.map(c=>c.timestamp));if(first>=end)throw Error('캔들 페이지 반복');end=exchange==='bitget'?first+DAY:first-1;if(map.size>=3500)break;}
+  for(let i=0;i<45;i++) {message(`${name} 완성 일봉 수집 중 · ${map.size}개`);const page=await json('/api/exchange?'+new URLSearchParams({exchange,coin:s.coin,action:'candles',...(i?{end:String(end)}:{})}));if(!page.candles.length)break;for(const c of page.candles)map.set(c.timestamp,c);const first=Math.min(...page.candles.map(c=>c.timestamp));if(first>=end)throw Error('캔들 페이지 반복');end=exchange==='bitget'?first+DAY:first-1;if(map.size>=3500)break;}
   if(selected().coin!==s.coin||selected().strategy!==s.strategy)throw Error('선택이 변경되었습니다. 다시 조회하세요.');
   candles=[...map.values()].sort((a,b)=>a.timestamp-b.timestamp);decision=decide(candles,s.strategy,{initial:true});$('#tc-prob').textContent=percent(decision.probability);
   message(`${decision.explanation} · 표본 ${decision.sample}개 · 완성 일봉 ${candles.length}개 · 마지막 일봉 ${new Date(decision.bar).toLocaleString('ko-KR')} · ${decision.kind}. 확률 80%는 수익 확률이나 수익 보장이 아닙니다.`);
