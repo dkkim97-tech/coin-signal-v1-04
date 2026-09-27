@@ -1,3 +1,4 @@
+window.COIN_SIGNAL_VERSION = '2.02';
 (function () {
   const path = decodeURIComponent(window.location.pathname || "");
   const params = new URLSearchParams(window.location.search);
@@ -65,11 +66,34 @@
 
 if (window.__HALVING_DATA__) {
   const extension = document.createElement('script');
-  extension.src = '/halving-latest-costs.js?v=1.0';
+  extension.src = '/halving-latest-costs.js?v=2.02';
   document.body.appendChild(extension);
 }
 if (window.__COIN_DATA__ && document.querySelector('#candle-chart')) {
   const navigation = document.createElement('script');
-  navigation.src = '/chart-wheel-navigation.js?v=1.0';
+  navigation.src = '/chart-wheel-navigation.js?v=2.02';
   document.body.appendChild(navigation);
 }
+
+(function publishAppVersion(){
+  const version=window.COIN_SIGNAL_VERSION;
+  function updateLabels(){
+    document.title=/V\d+\.\d+/i.test(document.title)?document.title.replace(/V\d+\.\d+/ig,'V'+version):document.title+' · 앱 V'+version;
+    const header=document.querySelector('header');
+    if(header){const walker=document.createTreeWalker(header,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode()))if(/V2\.01\b/i.test(node.nodeValue))node.nodeValue=node.nodeValue.replace(/V2\.01\b/ig,'V'+version);}
+    document.querySelectorAll('.tc-kicker').forEach(el=>{el.textContent='COIN SIGNAL · V'+version;});
+    if(!header||document.getElementById('app-release-notes'))return;
+    const notes=document.createElement('details');notes.id='app-release-notes';notes.style.cssText='border:1px solid #3b6858;border-radius:9px;padding:10px 14px;color:#d9eee4;background:#10251d;font-size:12px;line-height:1.7;max-width:560px';
+    notes.innerHTML=`<summary style="cursor:pointer;font-weight:800">앱 V${version} · 업데이트 내역</summary><p style="margin:8px 0">2026-09-27 업데이트</p><ul style="padding-left:18px;margin:0">
+      <li>단순 보유·EMA 35일과 MACD 전략을 12종목에서 비교</li>
+      <li>최근 180일·360일 비용 반영 추천 팝업: 수익률·최대 낙폭·선정 이유</li>
+      <li>반감기 중첩 차트: 최신 일봉·현재가 잠정 끝점, 비용 설정 유지 및 새로고침 반영</li>
+      <li>봉차트·MACD 휠 확대/축소, 드래그 이동, 시간축 동기화</li>
+      <li>봉차트 가격축의 억 단위를 소수점 두 자리로 표시 (1.00억)</li>
+      <li>업비트 현물·비트겟 선물 자동매매 연결 코드와 서버 설치 구성 준비. 실거래에는 별도 서버·API 연결 필요</li>
+    </ul>`;
+    (header.querySelector('.header-actions')||header).appendChild(notes);
+  }
+  updateLabels();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',updateLabels,{once:true});
+})();
