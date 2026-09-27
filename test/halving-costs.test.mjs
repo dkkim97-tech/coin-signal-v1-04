@@ -3,6 +3,13 @@ import assert from 'node:assert/strict';
 import '../halving-latest-costs.js';
 const {mergeCandles,applyCosts}=globalThis.HalvingCosts,DAY=86400000;
 const cycle={base:100,points:[1,2,1.5].map((ratio,i)=>({timestamp:i*DAY,day:i,ratio,highRatio:ratio+.1,lowRatio:ratio-.1}))};
+test('fresh quotes extend display only and failed quotes cannot masquerade as current prices',()=>{
+ const candles=[[DAY,1,2,1,2]],quote={ok:true,price:3,at:3*DAY};
+ const display=globalThis.HalvingCosts.withQuote(candles,quote);
+ assert.equal(display.length,2);assert.equal(display[1][4],3);assert.equal(candles.length,1);
+ assert.equal(globalThis.HalvingCosts.withQuote(candles,{...quote,ok:false}),candles);
+ assert.equal(globalThis.HalvingCosts.withQuote(candles,{...quote,at:0}),candles);
+});
 test('overlap replaces the same Korean calendar date rather than adding a duplicate day',()=>{
  const old=[[DAY-9*3600000,100,110,90,100]],live=[{timestamp:DAY,open:101,high:112,low:90,close:105}];
  const merged=mergeCandles(old,live,3*DAY);assert.equal(merged.length,1);assert.equal(merged[0][4],105);assert.equal(merged[0][0],DAY);
