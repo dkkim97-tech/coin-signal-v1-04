@@ -31,7 +31,11 @@
       return {...c,points,high:points.reduce((a,b)=>b.highRatio>a.highRatio?b:a),low:points.reduce((a,b)=>b.lowRatio<a.lowRatio?b:a)};
     });
   }
-  globalThis.HalvingCosts=Object.freeze({dayKey,mergeCandles,applyCosts});
+  function withQuote(candles,quote){
+    if(!quote?.ok||!Number.isFinite(quote.price)||quote.price<=0||!Number.isFinite(quote.at)||quote.at<=candles.at(-1)?.[0])return candles;
+    return [...candles,[quote.at,quote.price,quote.price,quote.price,quote.price]];
+  }
+  globalThis.HalvingCosts=Object.freeze({dayKey,mergeCandles,applyCosts,withQuote});
   if(typeof document==='undefined'||!globalThis.__HALVING_DATA__||typeof render!=='function')return;
   const data=globalThis.__HALVING_DATA__,futures=/(^|\/)futures(\/|$)/.test(location.pathname)||new URLSearchParams(location.search).get('mode')==='futures';
   const chart=document.querySelector('#cycle-chart'),panel=chart.closest('section'),statusByCoin=new Map();
@@ -42,14 +46,24 @@
     <label>편도 슬리피지 (%)<input id="hc-slip" type="number" min="0" max="2" step="0.001" value="0.08" required></label>
     ${futures?'<label>일 보유 비용 가정 (%)<input id="hc-hold" type="number" min="0" max="2" step="0.001" value="0.03" required></label>':''}
     <button class="copy-button" type="submit">비용 적용</button><button class="copy-button" id="hc-refresh" type="button">12종목 최신 가격 갱신</button></form>
-    <p class="notice">두 화면 모두 업비트 KRW 가격 사이클을 비교합니다. 최신 완성 일봉을 선에 반영하며, 조회 시점 현재가는 별도로 표시합니다. 비용 반영 모드는 첫 이용 가능 종가에 1회 매수한 뒤 각 평가일 종가에 전량 매도한다고 가정한 순자산 배수입니다. 1배 미만은 원금 손실입니다.</p>
+    <p class="notice">두 화면 모두 업비트 KRW 가격 사이클을 비교합니다. 새로고침 시 최신 일봉과 현재가를 다시 조회합니다. 선의 마지막 점은 조회 시점 현재가를 반영한 잠정값이며 확정 일봉이 아닙니다. 최고·최저 배수 표도 잠정 현재가를 포함합니다. 비용 반영 모드는 첫 이용 가능 종가에 1회 매수한 뒤 각 평가 시점에 전량 매도한다고 가정한 순자산 배수입니다. 1배 미만은 원금 손실입니다.</p>
     <p class="notice">입력한 현재 비용 조건을 과거 모든 사이클에 동일하게 적용합니다. 개인 계정 수수료와 과거 실제 체결 비용은 자동 조회하지 않습니다.${futures?' 일 보유 비용은 포지션 금액에 대한 가정이며 실제 비트겟 선물 수익률·펀딩 지급/수취·레버리지·청산을 재현하지 않습니다.':''} 사이클 유사도와 연간 급등락 표는 비용 차감 전 가격 기준입니다.</p>
     <p id="hc-progress" role="status" class="notice"></p><p id="hc-latest" class="notice" aria-live="polite"></p>`;
   panel.insertBefore(controls,chart);
   const style=document.createElement('style');style.textContent='#hc-form label{display:grid;gap:6px}#hc-form input{width:150px;padding:9px;border:1px solid #456358;border-radius:8px;background:#0d1211;color:#eff7f4}#hc-form button:disabled{opacity:.5}';document.head.appendChild(style);
   const $=s=>document.querySelector(s),originalBuild=buildCycles,originalRender=render,originalCorrelation=correlationLabel;
   let settings={fee:.0005,slippage:.0008,holding:futures?.0003:0},mode='net',busy=false;
-  buildCycles=function(candles){const cycles=originalBuild(candles);return mode==='net'?applyCosts(cycles,settings):cycles;};
+  const storageKey='halving-cost-settings-v1:'+(futures?'futures':'spot');
+  try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved){applyCosts([],saved.settings);settings={...saved.settings,holding:futures?saved.settings.holding:0};mode=saved.mode==='price'?'price':'net';}}catch{}
+  $('#hc-fee').value=String(settings.fee*100);$('#hc-slip').value=String(settings.slippage*100);if(futures)$('#hc-hold').value=String(settings.holding*100);$('#hc-view').value=mode;
+  function readSettings(){
+    if(!$('#hc-form').reportValidity())return false;
+    const next={fee:Number($('#hc-fee').value)/100,slippage:Number($('#hc-slip').value)/100,holding:futures?Number($('#hc-hold').value)/100:0};
+    applyCosts([],next);settings=next;mode=$('#hc-view').value;
+    try{localStorage.setItem(storageKey,JSON.stringify({settings,mode}));}catch{}
+    return true;
+  }
+  buildCycles=function(candles){const cycles=originalBuild(withQuote(candles,statusByCoin.get(state.symbol)));return mode==='net'?applyCosts(cycles,settings):cycles;};
   correlationLabel=function(){return originalCorrelation(originalBuild(data.coins[state.symbol].candles));};
   render=function(){
     originalRender();
@@ -64,20 +78,29 @@
       if(/최저.*배수/.test(th.textContent))th.textContent=net?'최저 순자산 배수':'최저 배수';
     }
     const info=statusByCoin.get(state.symbol);
+    if(info?.ok&&info.price){
+      $('#data-range').textContent=`${formatDate(data.coins[state.symbol].candles[0][0])} ~ ${formatDate(info.at)} (현재가 잠정)`;
+      const latest=ranges.at(-1)?.points.at(-1);
+      if(latest&&latest.timestamp===info.at){
+        $('#chart-detail').textContent+=' | 현재가 잠정 '+formatRatio(latest.ratio);
+        // Mark the rendered endpoint without changing confirmed daily history.
+        const paths=chart.querySelectorAll('path.cycle-line'),lastPath=paths[paths.length-1];
+        if(lastPath){const point=lastPath.getPointAtLength(lastPath.getTotalLength());const ns='http://www.w3.org/2000/svg',dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',point.x);dot.setAttribute('cy',point.y);dot.setAttribute('r','6');dot.setAttribute('fill','#fff');dot.setAttribute('stroke',ranges.at(-1).color);dot.setAttribute('stroke-width','3');const title=document.createElementNS(ns,'title');title.textContent='조회 시점 현재가 · 잠정 '+formatKrw(info.price)+' · '+formatRatio(latest.ratio);dot.appendChild(title);chart.appendChild(dot);}
+      }
+    }
     $('#hc-latest').textContent=info?.ok?`${state.symbol} · ${info.price?'현재가 '+formatKrw(info.price):'현재가 확인 실패 ('+info.quoteError+')'} (조회 ${new Date(info.at).toLocaleString('ko-KR')}) · 차트 마지막 완성 일봉 ${formatDate(data.coins[state.symbol].candles.at(-1)[0])}`:`${state.symbol} · ${info?.error||'내장 자료 표시 중 · 최신 시세 확인 대기'} · 자료 끝 ${formatDate(data.coins[state.symbol].candles.at(-1)[0])}`;
     // Log axes cannot represent zero. Disclose the floor rather than imply capital remains.
     if(net&&ranges.some(c=>c.points.some(p=>p.ratio===0)))$('#hc-latest').textContent+=' · 순자산 0 구간은 로그축 하한에 표시됩니다.';
   };
   $('#hc-form').onsubmit=e=>{
     e.preventDefault();
-    const next={fee:Number($('#hc-fee').value)/100,slippage:Number($('#hc-slip').value)/100,holding:futures?Number($('#hc-hold').value)/100:0};
-    try{applyCosts([],next);settings=next;mode=$('#hc-view').value;render();$('#hc-progress').textContent='표시 기준과 비용 조건을 적용했습니다.';}catch(error){$('#hc-progress').textContent=error.message;}
+    try{if(!readSettings())return;render();$('#hc-progress').textContent='표시 기준과 비용 조건을 저장·적용했습니다. 새로고침 후에도 유지됩니다.';}catch(error){$('#hc-progress').textContent=error.message;}
   };
-  $('#hc-view').onchange=()=>{mode=$('#hc-view').value;render();};
-  async function json(query){const r=await fetch('/api/exchange?'+new URLSearchParams(query),{cache:'no-store',signal:AbortSignal.timeout(25000)}),p=await r.json();if(!r.ok||p.error)throw Error(p.error||'시세 조회 실패');return {...p,observedAt:Date.parse(r.headers.get('date'))};}
+  $('#hc-view').onchange=()=>{if(readSettings())render();};
+  async function json(query){const r=await fetch('/api/exchange?'+new URLSearchParams({...query,_refresh:String(Date.now())}),{cache:'no-store',signal:AbortSignal.timeout(25000)}),p=await r.json();if(!r.ok||p.error)throw Error(p.error||'시세 조회 실패');return {...p,observedAt:Date.parse(r.headers.get('date'))};}
   async function refresh(){
-    if(busy)return;busy=true;$('#hc-refresh').disabled=true;let successes=0;const failures=[];
-    for(const symbol of data.symbols){
+    if(busy||!readSettings())return;busy=true;$('#hc-refresh').disabled=true;let successes=0;const failures=[];
+    for(const symbol of [state.symbol,...data.symbols.filter(s=>s!==state.symbol)]){
       $('#hc-progress').textContent=`최신 가격 갱신 ${successes+failures.length+1}/12 · ${symbol}`;
       try{
         let quote=null,quoteError='현재가 조회 오류';
@@ -103,6 +126,6 @@
     $('#hc-progress').textContent=`최신 완성 일봉 갱신 ${successes}/12 완료${failures.length?' · 실패: '+failures.join(', ')+' (종목 선택 후 상태 확인)':''}. 차트·최고/최저점·연간 급등락 표에 함께 반영했습니다.`;
   }
   $('#hc-refresh').onclick=refresh;
-  document.querySelector('footer').textContent='업비트 KRW 일봉 기준. 가격 모드는 첫 이용 가능 종가를 1배로, 비용 모드는 입력 비용을 차감한 순자산 배수로 표시합니다. 상장 전 구간은 표시하지 않으며, 현재가는 미완성 일봉에 합치지 않습니다.';
+  document.querySelector('footer').textContent='업비트 KRW 기준. 선의 마지막 현재가 점과 최고·최저 배수는 잠정값을 포함합니다. 확정 일봉 및 연간 급등락·유사도 계산에는 현재가를 합치지 않습니다. 비용은 저장된 입력 가정이며 자동 조회한 실제 계정 요율이 아닙니다.';
   render();refresh();
 })();
