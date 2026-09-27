@@ -7,9 +7,12 @@ import {selection} from '../trading/policy.mjs';
 const env=process.env;
 if(!env.TRADE_GATEWAY_TOKEN||env.TRADE_GATEWAY_TOKEN.length<32)throw Error('TRADE_GATEWAY_TOKEN must have at least 32 characters');
 const store=new Store(resolve(env.TRADING_DATA_PATH||'server/data/trading.sqlite')),controller=new Controller(store);
+const startedAt=Date.now();let lastTickAt=Date.now();
+store.put('runtime','worker',{startedAt,lastTickAt,intervalMs:15000});
 const server=http.createServer(async(req,res)=>{
   res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
   const send=(code,data)=>{res.statusCode=code;res.end(JSON.stringify(data));};
+  if(req.url==='/healthz'&&req.method==='GET')return send(Date.now()-lastTickAt<300000?200:503,{ok:Date.now()-lastTickAt<300000});
   if(req.url!=='/command'||req.method!=='POST')return send(404,{error:'Not found'});
   if(!sameSecret(req.headers.authorization,'Bearer '+env.TRADE_GATEWAY_TOKEN))return send(401,{error:'Unauthorized'});
   try {
@@ -31,5 +34,5 @@ const server=http.createServer(async(req,res)=>{
 server.listen(Number(env.TRADING_PORT||4190),env.TRADING_HOST||'127.0.0.1',()=>console.log('Trading worker listening; live enabled:',env.TRADING_ENABLED==='true'));
 // Single durable worker; the SQLite exclusive lock prevents two processes on one ledger.
 let ticking=false;
-const timer=setInterval(async()=>{if(ticking)return;ticking=true;try{await controller.serial(()=>controller.tick());}finally{ticking=false;}},15000);
+const timer=setInterval(async()=>{if(ticking)return;ticking=true;try{await controller.serial(()=>controller.tick());lastTickAt=Date.now();store.put('runtime','worker',{startedAt,lastTickAt,intervalMs:15000});}finally{ticking=false;}},15000);
 for(const sig of ['SIGINT','SIGTERM'])process.on(sig,()=>{clearInterval(timer);server.close(()=>{store.close();process.exit(0);});});

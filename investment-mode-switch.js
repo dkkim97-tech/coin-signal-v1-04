@@ -47,7 +47,7 @@
   const row = document.createElement("div");
   row.className = "investment-mode-row";
   row.dataset.investmentModeSwitch = "true";
-  row.innerHTML = `<span class="investment-mode-badge">${isFutures ? "비트겟 선물 앱" : "코빗 현물 앱"}</span><a class="investment-mode-link" href="${target}">${isFutures ? "현물 투자 앱으로 돌아가기 →" : "선물 투자 앱 열기 →"}</a>`;
+  row.innerHTML = `<span class="investment-mode-badge">${isFutures ? "비트겟 선물 앱" : "업비트 현물 앱"}</span><a class="investment-mode-link" href="${target}">${isFutures ? "현물 투자 앱으로 돌아가기 →" : "선물 투자 앱 열기 →"}</a>`;
   actions.prepend(row);
 
   if (isFutures) {

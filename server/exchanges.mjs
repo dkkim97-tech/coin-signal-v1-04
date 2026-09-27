@@ -1,10 +1,12 @@
 import {createHmac} from 'node:crypto';
 import {D,selection,COINS,DAY} from '../trading/policy.mjs';
 import {normalize} from '../position/indicators.mjs';
+import {UpbitExchange,signedUpbitRequest} from './upbit.mjs';
 const CAT='USDT-FUTURES';
 const nextSlot=new Map();
 async function throttle(exchange){const now=Date.now(),slot=Math.max(now,nextSlot.get(exchange)||0);nextSlot.set(exchange,slot+220);if(slot>now)await new Promise(r=>setTimeout(r,slot-now));}
 export function signedRequest(exchange,method,path,params,key,stamp) {
+  if(exchange==='upbit')return signedUpbitRequest(method,path,params,key);
   if(exchange==='korbit') {
     const q=new URLSearchParams({...params,timestamp:String(stamp),recvWindow:'5000'});
     q.set('signature',createHmac('sha256',key.secret).update(q.toString()).digest('hex'));
@@ -14,7 +16,7 @@ export function signedRequest(exchange,method,path,params,key,stamp) {
   return {url:'https://api.bitget.com'+path+suffix,init:{method,headers:{'ACCESS-KEY':key.key,'ACCESS-PASSPHRASE':key.passphrase,'ACCESS-TIMESTAMP':String(stamp),'ACCESS-SIGN':createHmac('sha256',key.secret).update(String(stamp)+method+path+suffix+body).digest('base64'),'Content-Type':'application/json',...(key.demo?{paptrading:'1'}:{})},...(body?{body}:{})}};
 }
 export class Exchange {
-  constructor(exchange,{fetcher=fetch,env=process.env}={}) { this.exchange=exchange;this.fetcher=fetcher;this.env=env; }
+  constructor(exchange,{fetcher=fetch,env=process.env}={}) { if(exchange==='upbit')return new UpbitExchange({fetcher,env});selection(exchange,'BTC',1);this.exchange=exchange;this.fetcher=fetcher;this.env=env; }
   async call(path,params={},method='GET',priv=false,attempt=0) {
     await throttle(this.exchange);
     const base=this.exchange==='korbit'?'https://api.korbit.co.kr':'https://api.bitget.com';

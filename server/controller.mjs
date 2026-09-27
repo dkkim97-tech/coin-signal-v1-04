@@ -6,7 +6,7 @@ const id=()=>randomUUID().replaceAll('-','');
 export class Controller {
   constructor(store,{env=process.env,exchangeFactory=e=>new Exchange(e,{env}),clock=Date.now,decisionFactory=decide}={}) {this.store=store;this.env=env;this.exchangeFactory=exchangeFactory;this.clock=clock;this.decide=decisionFactory;this.queue=Promise.resolve();}
   serial(fn) {const next=this.queue.then(fn);this.queue=next.catch(()=>{});return next;}
-  serverEnabled(exchange) {return this.env.TRADING_ENABLED==='true'&&(exchange!=='bitget'||this.env.BITGET_DEMO==='true'||this.env.BITGET_LIVE_ENABLED==='true');}
+  serverEnabled(exchange) {return this.env.TRADING_ENABLED==='true'&&(exchange!=='upbit'||this.env.UPBIT_LIVE_ENABLED==='true')&&(exchange!=='bitget'||this.env.BITGET_DEMO==='true'||this.env.BITGET_LIVE_ENABLED==='true');}
   enabled(exchange) {return this.serverEnabled(exchange)&&this.store.get('automation',exchange)?.on===true;}
   async automation(exchange,on) {
     if(typeof on!=='boolean')throw Error('자동매매 ON/OFF 값이 필요합니다.');
@@ -74,7 +74,11 @@ export class Controller {
     const plan=makePlan({...selected,limits,snapshot,meta:snapshot.meta,decision,now:this.clock()});
     const quote={...plan,id:id(),limits,connectionId};this.store.put('quotes',quote.id,quote);return quote;
   }
-  status(exchange) {return {policy:POLICY,enabled:this.enabled(exchange),serverEnabled:this.serverEnabled(exchange),automationOn:this.store.get('automation',exchange)?.on===true,demo:exchange==='bitget'&&this.env.BITGET_DEMO==='true',limits:this.store.get('limits',exchange),account:this.store.get('account',exchange),campaigns:this.store.all('campaigns').filter(c=>c.exchange===exchange),orders:this.store.all('orders').filter(o=>o.exchange===exchange).slice(-100),audit:this.store.all('audit').filter(a=>a.exchange===exchange).slice(-30)};}
+  readiness(exchange) {
+    const prefix=exchange.toUpperCase(),credentialsConfigured=!!this.env[prefix+'_API_KEY']&&!!this.env[prefix+'_API_SECRET']&&(exchange!=='bitget'||!!this.env.BITGET_PASSPHRASE);
+    return {credentialsConfigured,accountVerified:false,message:credentialsConfigured?'키 설정됨 · 실계좌 미리보기로 권한·잔고·계좌 모드 검증 필요':'실행 서버에 거래소 API 키 설정 필요'};
+  }
+  status(exchange) {return {policy:POLICY,readiness:this.readiness(exchange),worker:this.store.get('runtime','worker'),enabled:this.enabled(exchange),serverEnabled:this.serverEnabled(exchange),automationOn:this.store.get('automation',exchange)?.on===true,demo:exchange==='bitget'&&this.env.BITGET_DEMO==='true',limits:this.store.get('limits',exchange),account:this.store.get('account',exchange),campaigns:this.store.all('campaigns').filter(c=>c.exchange===exchange),orders:this.store.all('orders').filter(o=>o.exchange===exchange).slice(-100),audit:this.store.all('audit').filter(a=>a.exchange===exchange).slice(-30)};}
   async arm(quoteId) {
     const quote=this.store.get('quotes',quoteId);if(!quote||quote.expires<this.clock()||quote.consumed)throw Error('미리보기가 만료되었거나 이미 실행되었습니다.');
     if(!this.enabled(quote.exchange))throw Error('서버의 실주문/데모 실행 설정이 꺼져 있습니다.');
@@ -112,6 +116,7 @@ export class Controller {
         // Refresh actual balances before EACH order. Never assume an ACK was a fill.
         await this.reconcile(e);
         const snapshot=await e.snapshot(o.coin),limits=this.store.get('limits',e.exchange),used=usage(snapshot);
+        if(this.clock()-snapshot.at>15000||snapshot.at>this.clock()+1000)throw Error('주문 직전 계좌·시세 조회가 오래되었습니다.');
         this.store.put('account',e.exchange,snapshot);
         const known=new Set(snapshot.pending.map(p=>p.clientId));
         for(const local of this.activeOrders(e.exchange))if(local.status!=='QUEUED'&&!known.has(local.clientId))throw Error('거래소 미체결·잔고 동기화 대기');
@@ -122,7 +127,7 @@ export class Controller {
         } else {
           const position=snapshot.positions.find(p=>p.coin===o.coin),quantity=D(position?.qty||0);
           if((o.side==='sell'&&!quantity.gt(0))||(o.side==='buy'&&!quantity.lt(0))||D(o.qty).gt(quantity.abs()))throw Error('청산 가능 수량 변경');
-          if(e.exchange==='korbit'&&D(o.qty).gt(position.available))throw Error('매도 가능 수량 부족');
+          if(e.exchange!=='bitget'&&D(o.qty).gt(position.available))throw Error('매도 가능 수량 부족');
         }
         if(!this.enabled(e.exchange))throw Error('자동매매 OFF: 주문 중지');
         this.store.put('orders',o.clientId,{...o,status:'SUBMITTING',attempted:true});

@@ -5,8 +5,8 @@ export const DAY = 86400000;
 export const POLICY = Object.freeze({ version:'D5-80-v2.2', horizon:5, threshold:.8, splits:5, coefficients:[.2,.5,.8,1.1,1.4], minSamples:30 });
 export const COINS = ['BTC','ETH','XRP','SOL','ADA','DOGE','AVAX','LINK','DOT','UNI','XLM','ONDO'];
 export function selection(exchange, coin, strategy) {
-  if (!['korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='korbit'?3:5)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 코빗은 현물 MACD 1~3입니다.');
-  return {exchange,coin,strategy,symbol:exchange==='korbit'?coin.toLowerCase()+'_krw':coin+'USDT',currency:exchange==='korbit'?'KRW':'USDT'};
+  if (!['upbit','korbit','bitget'].includes(exchange) || !COINS.includes(coin) || !Number.isInteger(strategy) || strategy<1 || strategy>(exchange==='bitget'?5:3)) throw Error('거래소·종목·전략 조합이 올바르지 않습니다. 현물은 MACD 1~3입니다.');
+  return {exchange,coin,strategy,symbol:exchange==='upbit'?'KRW-'+coin:exchange==='korbit'?coin.toLowerCase()+'_krw':coin+'USDT',currency:exchange==='bitget'?'USDT':'KRW'};
 }
 export function positive(v,name) { const d=D(v); if (!d.isFinite() || !d.gt(0) || d.gt('1e15')) throw Error(name+'은 0보다 큰 금액이어야 합니다.'); return d; }
 export function validateLimits(input) {
@@ -49,7 +49,7 @@ export function makePlan({exchange,coin,strategy,limits,snapshot,meta,decision,n
   const cap=positive(limits.symbols[coin]||0,'선택 종목 한도'),totalCap=D(limits.total);
   if(now-snapshot.at>15000 || snapshot.at>now+1000) throw Error('계좌 조회가 오래되었습니다. 다시 조회하세요.');
   const price=positive(snapshot.price,'현재가'),current=D(snapshot.positions.find(p=>p.coin===coin)?.qty||0),used=usage(snapshot);
-  if(exchange==='korbit'&&(decision.target<0||decision.target>1||current.lt(0))) throw Error('현물에서는 숏·레버리지 주문을 허용하지 않습니다.');
+  if(exchange!=='bitget'&&(decision.target<0||decision.target>1||current.lt(0))) throw Error('현물에서는 숏·레버리지 주문을 허용하지 않습니다.');
   if(decision.target!==0&&!STRATEGIES[strategy].targets.includes(decision.target)) throw Error('목표 비중 오류');
   const budget=Decimal.min(positive(snapshot.equity,'계좌 평가액'),cap.div(STRATEGIES[strategy].maxExposure));
   // A target is based on capped capital. Passive price gains do not expand the strategy budget.
@@ -61,7 +61,8 @@ export function makePlan({exchange,coin,strategy,limits,snapshot,meta,decision,n
   }
   const side=delta.gte(0)?'buy':'sell';
   const completion=decision.kind==='CONFIRMED'||decision.kind==='INITIAL';
-  const grid=completion?{prices:Array(5).fill(snap(price.mul(side==='buy'?'1.003':'0.997'),tickAt(meta,price),side==='sell').toFixed()),step:'0'}:ladder(meta,decision.anchor,decision.adr,side);
+  const protectedPrice=price.mul(side==='buy'?'1.003':'0.997');
+  const grid=completion?{prices:Array(5).fill(snap(protectedPrice,tickAt(meta,protectedPrice),side==='sell').toFixed()),step:'0'}:ladder(meta,decision.anchor,decision.adr,side);
   const worst=Decimal.max(price,...grid.prices.map(D)).mul('1.005');
   let maxQty=delta.abs();
   if(reduceOnly) maxQty=Decimal.min(maxQty,current.abs());
@@ -76,5 +77,5 @@ export function makePlan({exchange,coin,strategy,limits,snapshot,meta,decision,n
   const orders=grid.prices.map((p,i)=>({split:i+1,side,qty:snap(perOrderAmount.div(p),meta.qtyStep).toFixed(),price:p,timeInForce:completion?'ioc':'gtc',reduceOnly}));
   const min=D(meta.minNotional||0),max=D(meta.maxNotional||'1e30');
   const valid=orders.every(o=>{const unit=D(o.qty);return unit.gt(0)&&unit.gte(meta.minQty||0)&&unit.lte(meta.maxQty||'1e30')&&unit.mul(o.price).gte(min)&&unit.mul(o.price).lte(max);});
-  return {policy:POLICY.version,exchange,coin,strategy,currency:exchange==='korbit'?'KRW':'USDT',at:now,expires:now+30000,decision,budget:budget.toFixed(),currentQty:current.toFixed(),targetQty:desired.toFixed(),phase,step:grid.step,used:used.total.toFixed(),headroom:Decimal.max(0,totalCap.sub(used.total)).toFixed(),orders:valid?orders:[],reason:valid?null:'한도·잔고·최소 주문 단위로 5분할 주문을 만들 수 없습니다. 잔량을 완료로 처리하지 않습니다.',residual:delta.abs().toFixed()};
+  return {policy:POLICY.version,exchange,coin,strategy,currency:exchange==='bitget'?'USDT':'KRW',at:now,expires:now+30000,decision,budget:budget.toFixed(),currentQty:current.toFixed(),targetQty:desired.toFixed(),phase,step:grid.step,used:used.total.toFixed(),headroom:Decimal.max(0,totalCap.sub(used.total)).toFixed(),orders:valid?orders:[],reason:valid?null:'한도·잔고·최소 주문 단위로 5분할 주문을 만들 수 없습니다. 잔량을 완료로 처리하지 않습니다.',residual:delta.abs().toFixed()};
 }

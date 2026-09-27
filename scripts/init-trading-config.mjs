@@ -1,0 +1,10 @@
+import {randomBytes} from 'node:crypto';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+const domain=process.argv[2];
+if(!domain||!/^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(domain))throw Error('Usage: node scripts/init-trading-config.mjs trading.example.com');
+const worker=new URL('../deploy/.env',import.meta.url),vercel=new URL('../deploy/.env.vercel',import.meta.url);
+if(existsSync(worker)||existsSync(vercel))throw Error('기존 비밀 설정을 덮어쓰지 않습니다. 서버에서 기존 파일을 확인하세요.');
+const gateway=randomBytes(32).toString('hex'),operator=randomBytes(32).toString('hex');
+writeFileSync(worker,readFileSync(new URL('../deploy/.env.example',import.meta.url),'utf8').replace('trading.example.com',domain).replace('TRADE_GATEWAY_TOKEN=','TRADE_GATEWAY_TOKEN='+gateway),{mode:0o600,flag:'wx'});
+writeFileSync(vercel,`TRADE_GATEWAY_URL=https://${domain}\nTRADE_GATEWAY_TOKEN=${gateway}\nTRADE_OPERATOR_TOKEN=${operator}\nTRADING_ALLOWED_ORIGIN=https://coin-signal-v1-04.vercel.app\n`,{mode:0o600,flag:'wx'});
+console.log('deploy/.env와 deploy/.env.vercel 생성 완료. 비밀 값은 출력하지 않았습니다. 서버에서만 편집하고 저장소에 올리지 마세요.');

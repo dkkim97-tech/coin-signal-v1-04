@@ -1,0 +1,18 @@
+{$WORKER_DOMAIN} {
+    @commands {
+        path /command
+        method POST
+    }
+    handle @commands {
+        request_body {
+            max_size 16KB
+        }
+        reverse_proxy worker:4190
+    }
+    handle /healthz {
+        reverse_proxy worker:4190
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
