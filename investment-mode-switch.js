@@ -84,7 +84,7 @@ if (window.__COIN_DATA__ && document.querySelector('#candle-chart')) {
     document.querySelectorAll('.tc-kicker').forEach(el=>{el.textContent='COIN SIGNAL · V'+version;});
     if(!header||document.getElementById('app-release-notes'))return;
     const notes=document.createElement('details');notes.id='app-release-notes';notes.style.cssText='border:1px solid #3b6858;border-radius:9px;padding:10px 14px;color:#d9eee4;background:#10251d;font-size:12px;line-height:1.7;max-width:560px';
-    notes.innerHTML=`<summary style="cursor:pointer;font-weight:800">앱 V${version} · 업데이트 내역</summary><p style="margin:8px 0">2026-09-27 업데이트</p><ul style="padding-left:18px;margin:0">
+    notes.innerHTML=`<summary style="cursor:pointer;font-weight:800">앱 V${version} · 업데이트 내역</summary><p style="margin:8px 0">2026-09-30 업데이트</p><ul style="padding-left:18px;margin:0"><li>유사 패턴·다음 봉 확률 분석을 최근 60봉으로 확대 (최근 5봉 가중치 ×3 유지)</li>
       <li>단순 보유·EMA 35일과 MACD 전략을 12종목에서 비교</li>
       <li>최근 180일·360일 비용 반영 추천 팝업: 수익률·최대 낙폭·선정 이유</li>
       <li>반감기 중첩 차트: 최신 일봉·현재가 잠정 끝점, 비용 설정 유지 및 새로고침 반영</li>
