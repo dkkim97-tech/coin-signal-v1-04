@@ -4,3 +4,5 @@ reports
 test
 node_modules
 deploy
+
+.catalog
